@@ -21,3 +21,55 @@ input {
     padding: 8px;
     font-size: 16px;
 }
+
+.lista {
+    display: flex;
+    flex-direction: row;
+    /* Esto coloca los elementos de derecha a izquierda */
+    list-style-type: none;
+    /* Elimina los puntos de la lista */
+    padding: 0;
+    /* Elimina el padding */
+}
+
+.lista li {
+    margin: 10px;
+    /* Espaciado entre los elementos */
+}
+
+.comandos button {
+    font-size: 35px;
+    padding: 0px;
+    background-color: white;
+    border: 0px;
+}
+
+.comandos button {
+    font-size: 35px;
+    /* Tamaño grande para el texto */
+    padding: 0px;
+    /* Tamaño grande para el botón */
+    border-radius: 8px;
+    /* Bordes redondeados */
+    background-color: #ffffff;
+    /* Color de fondo predeterminado */
+    color: white;
+    /* Color del texto */
+    border: none;
+    /* Sin borde */
+    cursor: pointer;
+    /* Cursor de mano */
+    margin: 5px;
+    /* Espaciado entre botones */
+    transition: background-color 0.3s, transform 0.3s;
+    /* Transición suave al cambiar color */
+}
+
+.comandos button:hover {
+    background-color: #45a049;
+    /* Color de fondo cuando el ratón está sobre el botón */
+    color: #fff;
+    /* Asegura que el texto se mantenga blanco */
+    transform: scale(1.1);
+    /* Escala el botón al pasar el ratón sobre él */
+}

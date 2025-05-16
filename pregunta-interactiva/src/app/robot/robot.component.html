@@ -1,16 +1,25 @@
+<!-- Vista del robot -->
 <div class="container">
     <div class="tortuga" [ngStyle]="{ top: y + 'px', left: x + 'px' }"></div>
 </div>
-
-<div class="botonera">
-    <button (click)="procesarComando('left')">⬅️</button>
-    <button (click)="procesarComando('right')">➡️</button>
-    <button (click)="procesarComando('up')">⬆️</button>
-    <button (click)="procesarComando('down')">⬇️</button>
+<!-- Botones para agregar comandos -->
+<div class="comandos">
+    <button (click)="agregarComando('left')">⬅️</button>
+    <button (click)="agregarComando('right')">➡️</button>
+    <button (click)="agregarComando('up')">⬆️</button>
+    <button (click)="agregarComando('down')">⬇️</button>
 </div>
+<!-- Lista de comandos -->
 <div>
-    <h3>Comandos ejecutados:</h3>
-    <ul>
-        <li *ngFor="let cmd of comandos">{{ cmd }}</li>
+    <h3>Comandos en espera:</h3>
+    <ul class="lista">
+        <li *ngFor="let cmd of comandos_img">{{ cmd }}</li>
     </ul>
+</div>
+
+<!-- Botón para ejecutar -->
+<div>
+    <button (click)="ejecutarComandos()" [disabled]="comandos.length === 0 || ejecutando">
+    Enviar comandos
+  </button>
 </div>
