@@ -1,0 +1,24 @@
+<div class="game-container">
+  <h2>Juego "{{ targetWord }}"</h2>
+
+  <div class="board">
+    <div
+      class="row"
+      *ngFor="let row of board; let i = index"
+    >
+      <app-cell
+        *ngFor="let cell of row; let j = index"
+        [value]="cell"
+        [isCarPosition]="isCarPosition(i, j)"
+        [isFound]="isLetterFound(i, j)"
+      ></app-cell>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button type="button" (click)="moveCar('up')">↑ Arriba</button>
+    <button type="button" (click)="moveCar('left')">← Izquierda</button>
+    <button type="button" (click)="moveCar('right')">→ Derecha</button>
+    <button type="button" (click)="moveCar('down')">↓ Abajo</button>
+  </div>
+</div>
