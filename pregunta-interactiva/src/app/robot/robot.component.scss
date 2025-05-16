@@ -1,8 +1,8 @@
 $container_width: 500px;
 .container {
     position: relative;
-    width: $container_width;
-    height: 300px;
+    width: 440px;
+    height: 440px;
     border: 2px solid black;
     margin-bottom: 20px;
     background-color: #e8f4fc;
@@ -16,8 +16,8 @@ $container_width: 500px;
     transition: 0.3s ease;
 }
 
-.input {
-    width: $container_width;
+input {
+    width: 100%;
     padding: 8px;
     font-size: 16px;
 }

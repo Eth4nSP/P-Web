@@ -2,4 +2,15 @@
     <div class="tortuga" [ngStyle]="{ top: y + 'px', left: x + 'px' }"></div>
 </div>
 
-<input class="input" type="text" placeholder="Escribe un comando (w, s, a, d)" [(ngModel)]="comando" (keydown.enter)="procesarComando(comando)" />
+<div class="botonera">
+    <button (click)="procesarComando('left')">⬅️</button>
+    <button (click)="procesarComando('right')">➡️</button>
+    <button (click)="procesarComando('up')">⬆️</button>
+    <button (click)="procesarComando('down')">⬇️</button>
+</div>
+<div>
+    <h3>Comandos ejecutados:</h3>
+    <ul>
+        <li *ngFor="let cmd of comandos">{{ cmd }}</li>
+    </ul>
+</div>
