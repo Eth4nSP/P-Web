@@ -1,0 +1,23 @@
+$container_width: 500px;
+.container {
+    position: relative;
+    width: $container_width;
+    height: 300px;
+    border: 2px solid black;
+    margin-bottom: 20px;
+    background-color: #e8f4fc;
+}
+
+.tortuga {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background-color: green;
+    transition: 0.3s ease;
+}
+
+.input {
+    width: $container_width;
+    padding: 8px;
+    font-size: 16px;
+}

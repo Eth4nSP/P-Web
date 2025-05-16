@@ -1,0 +1,5 @@
+<div class="container">
+    <div class="tortuga" [ngStyle]="{ top: y + 'px', left: x + 'px' }"></div>
+</div>
+
+<input class="input" type="text" placeholder="Escribe un comando (w, s, a, d)" [(ngModel)]="comando" (keydown.enter)="procesarComando(comando)" />

@@ -1,12 +1,10 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RobotComponent } from './robot/robot.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  standalone: true,
+  imports: [RobotComponent],
+  template: `<app-robot></app-robot>`, // lo mostramos directamente
 })
-export class AppComponent {
-  title = 'pregunta-interactiva';
-}
+export class AppComponent {}
