@@ -60,8 +60,8 @@ export class RobotComponent {
 
   mover(comando: string) {
     if (comando === 'up') this.y = Math.max(0, this.y - this.paso);
-    else if (comando === 'down') this.y = Math.min(260, this.y + this.paso);
+    else if (comando === 'down') this.y = Math.min(400, this.y + this.paso);
     else if (comando === 'left') this.x = Math.max(0, this.x - this.paso);
-    else if (comando === 'right') this.x = Math.min(460, this.x + this.paso);
+    else if (comando === 'right') this.x = Math.min(400, this.x + this.paso);
   }
 }
