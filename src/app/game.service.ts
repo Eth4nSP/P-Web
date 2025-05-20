@@ -12,9 +12,12 @@ interface Position {
 export class GameService {
   private carPositionSubject = new BehaviorSubject<Position>({ row: 0, col: 0 });
 
-  constructor() { }
+  constructor() {
+    console.log('GameService inicializado');
+  }
 
   updateCarPosition(row: number, col: number): void {
+    console.log(`Actualizando posición del carro: [${row}, ${col}]`);
     this.carPositionSubject.next({ row, col });
   }
 

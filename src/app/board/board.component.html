@@ -1,6 +1,5 @@
 <div class="game-container">
   <h2>Juego "{{ targetWord }}"</h2>
-
   <div class="board">
     <div
       class="row"
@@ -14,11 +13,22 @@
       ></app-cell>
     </div>
   </div>
-
   <div class="controls">
     <button type="button" (click)="moveCar('up')">↑ Arriba</button>
     <button type="button" (click)="moveCar('left')">← Izquierda</button>
     <button type="button" (click)="moveCar('right')">→ Derecha</button>
     <button type="button" (click)="moveCar('down')">↓ Abajo</button>
+  </div>
+  <div class="target-word">
+    <h3>Letras encontradas:</h3>
+    <div class="letters">
+      <span *ngFor="let letter of targetWord.split(''); let i = index"
+            [class.found]="foundLetters[i]">
+        {{ letter }}
+      </span>
+    </div>
+    <div class="progress">
+      {{ foundPositions.length }} de {{ targetWord.length }} letras descubiertas
+    </div>
   </div>
 </div>
