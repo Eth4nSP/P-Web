@@ -19,8 +19,8 @@ export class BoardComponent implements OnInit, OnDestroy {
   carPosition = { row: 0, col: 0 };
   targetWord = 'COMPUTER';
   foundLetters: boolean[] = [];
-  // Guarda las posiciones específicas de las letras encontradas
-  foundPositions: {row: number, col: number}[] = [];
+  // Guarda las posiciones específicas de las letras encontradas y su índice en la palabra
+  foundPositions: {row: number, col: number, letterIndex: number}[] = [];
   private subscription: Subscription | null = null;
 
   constructor(private gameService: GameService) { }
@@ -28,10 +28,11 @@ export class BoardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Inicializar el arreglo foundLetters
     this.foundLetters = Array(this.targetWord.length).fill(false);
+    
     // Inicializar el array de posiciones encontradas
     this.foundPositions = [];
     
-    // Inicializar el tablero con letras aleatorias
+    // Inicializar el tablero con letras aleatorias y la palabra en forma de serpiente
     this.initializeBoard();
     
     // Suscribirse a los cambios de posición del carro
@@ -50,13 +51,14 @@ export class BoardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Inicializa el tablero con letras aleatorias y coloca las letras de COMPUTER secuencialmente
+  // Inicializa el tablero con letras aleatorias y coloca las letras de COMPUTER en forma de serpiente
   initializeBoard(): void {
     // Crear un tablero de 8x8
-    const rows = 8;
-    const cols = 8;
+    const rows = 10;
+    const cols = 10;
     
     // Inicializar el tablero con letras aleatorias
+    this.board = [];
     for (let i = 0; i < rows; i++) {
       this.board[i] = [];
       for (let j = 0; j < cols; j++) {
@@ -66,33 +68,83 @@ export class BoardComponent implements OnInit, OnDestroy {
       }
     }
     
-    // Determinar punto de inicio para colocar las letras consecutivamente
-    // Elegimos empezar en una posición del borde para tener espacio
-    // Por ejemplo, colocamos la primera letra en (3,1)
-    let startRow = 3;
-    let startCol = 1;
+    // Colocar las letras de COMPUTER en forma de serpiente
+    this.placeWordAsSnake();
     
-    // Colocar el auto en (3,0) - a la izquierda de la primera letra
-    this.carPosition = { row: startRow, col: startCol - 1 };
+    // Colocar el auto al inicio de la serpiente, pero una casilla antes
+    this.carPosition = {
+      row: 3,
+      col: 0
+    };
     this.gameService.updateCarPosition(this.carPosition.row, this.carPosition.col);
-
-    // Limpiamos la posición del auto para que no tenga letra
-    this.board[this.carPosition.row][this.carPosition.col] = ' ';
     
-    // Colocar las letras de COMPUTER consecutivamente en horizontal
-    for (let i = 0; i < this.targetWord.length; i++) {
-      // Si llegamos al borde del tablero, pasamos a la siguiente fila
-      if (startCol + i >= cols) {
-        startRow++;
-        startCol = 1;
-      }
+    // No colocar letra en la posición del auto
+    this.board[this.carPosition.row][this.carPosition.col] = ' ';
+  }
+
+  // Coloca la palabra objetivo en forma de serpiente en el tablero
+  placeWordAsSnake(): void {
+    const word = this.targetWord;
+    
+    // Iniciar en una posición fija para facilitar la depuración
+    let currentRow = 3;
+    let currentCol = 1;
+    
+    // Direcciones posibles: 0=derecha, 1=abajo, 2=izquierda, 3=arriba
+    const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+    let directionIndex = 0;
+    
+    // Posiciones ya ocupadas por la palabra
+    const occupiedPositions = new Set<string>();
+    
+    // Colocar cada letra de la palabra
+    for (let i = 0; i < word.length; i++) {
+      // Colocar la letra en la posición actual
+      this.board[currentRow][currentCol] = word[i];
+      occupiedPositions.add(`${currentRow},${currentCol}`);
       
-      // Colocar la letra en el tablero
-      const letterCol = (startCol + i) % cols;
-      const letterRow = startRow + Math.floor((startCol + i) / cols);
-      
-      if (letterRow < rows) {
-        this.board[letterRow][letterCol] = this.targetWord[i];
+      if (i < word.length - 1) {
+        // Determinar la próxima dirección
+        let validDirectionFound = false;
+        let attempts = 0;
+        const maxAttempts = 4; // Probar todas las direcciones posibles
+        
+        while (!validDirectionFound && attempts < maxAttempts) {
+          // Calcular la próxima posición
+          const nextRow = currentRow + directions[directionIndex][0];
+          const nextCol = currentCol + directions[directionIndex][1];
+          
+          // Verificar si la posición es válida (dentro del tablero y no ocupada)
+          if (
+            nextRow >= 0 && nextRow < this.board.length &&
+            nextCol >= 0 && nextCol < this.board[0].length &&
+            !occupiedPositions.has(`${nextRow},${nextCol}`)
+          ) {
+            // Actualizar la posición actual
+            currentRow = nextRow;
+            currentCol = nextCol;
+            validDirectionFound = true;
+          } else {
+            // Cambiar la dirección
+            directionIndex = (directionIndex + 1) % 4;
+            attempts++;
+          }
+        }
+        
+        // Si no se encontró una dirección válida, buscar cualquier posición disponible
+        if (!validDirectionFound) {
+          for (let r = 0; r < this.board.length; r++) {
+            for (let c = 0; c < this.board[0].length; c++) {
+              if (!occupiedPositions.has(`${r},${c}`)) {
+                currentRow = r;
+                currentCol = c;
+                validDirectionFound = true;
+                break;
+              }
+            }
+            if (validDirectionFound) break;
+          }
+        }
       }
     }
   }
@@ -103,22 +155,22 @@ export class BoardComponent implements OnInit, OnDestroy {
     const currentCol = this.carPosition.col;
     const currentLetter = this.board[currentRow][currentCol];
     
-    // Buscar la posición exacta de la letra en la palabra objetivo
+    // Buscar la posición de la letra en la palabra objetivo
     for (let i = 0; i < this.targetWord.length; i++) {
       if (this.targetWord[i] === currentLetter) {
-        // Marcar la letra como encontrada en la palabra
-        this.foundLetters[i] = true;
+        // Verificar si ya hemos encontrado esta letra específica en otra posición
+        const letterPositionAlreadyFound = this.foundPositions.some(pos => pos.letterIndex === i);
         
-        // Guardar la posición específica donde se encontró la letra
-        const alreadyFound = this.foundPositions.some(
-          pos => pos.row === currentRow && pos.col === currentCol
-        );
-        
-        if (!alreadyFound) {
-          this.foundPositions.push({ row: currentRow, col: currentCol });
+        if (!letterPositionAlreadyFound) {
+          // Marcar la letra como encontrada en la palabra
+          this.foundLetters[i] = true;
+          
+          // Guardar la posición específica donde se encontró la letra
+          this.foundPositions.push({ row: currentRow, col: currentCol, letterIndex: i });
+          
+          // Solo encontramos la primera ocurrencia de la letra
+          break;
         }
-        
-        break;
       }
     }
   }

@@ -4,13 +4,27 @@
   align-items: center;
   margin: 20px;
   font-family: Arial, sans-serif;
+  background-color: #e9f5ff;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+h2 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .board {
   display: flex;
   flex-direction: column;
-  border: 2px solid #000;
+  border: 3px solid #3498db;
+  border-radius: 8px;
   margin-bottom: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #f9f9f9;
 }
 
 .row {
@@ -21,7 +35,7 @@
   margin-top: 20px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
   gap: 5px;
   width: 200px;
 }
@@ -30,40 +44,50 @@ button {
   padding: 10px 15px;
   font-size: 16px;
   cursor: pointer;
-  background-color: #4CAF50;
   color: white;
   border: none;
   border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
 }
 
 button:hover {
-  background-color: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Posición de botones específicos */
-button:nth-child(1) { /* Arriba */
+/* Colores específicos para cada botón */
+.btn-up {
   grid-column: 2;
   grid-row: 1;
+  background-color: #3498db; /* Azul */
 }
 
-button:nth-child(2) { /* Izquierda */
+.btn-left {
   grid-column: 1;
   grid-row: 2;
+  background-color: #f1c40f; /* Amarillo */
 }
 
-button:nth-child(3) { /* Derecha */
+.btn-right {
   grid-column: 3;
   grid-row: 2;
+  background-color: #2ecc71; /* Verde */
 }
 
-button:nth-child(4) { /* Abajo */
+.btn-down {
   grid-column: 2;
   grid-row: 3;
+  background-color: #e74c3c; /* Rojo */
 }
 
 .target-word {
   margin-top: 20px;
   text-align: center;
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .letters {
@@ -76,8 +100,28 @@ button:nth-child(4) { /* Abajo */
   margin: 0 5px;
   font-size: 24px;
   font-weight: bold;
+  padding: 5px;
+  border-radius: 4px;
+  background-color: #ecf0f1;
+  min-width: 30px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .letters .found {
-  color: green;
+  color: white;
+  background-color: #27ae60;
+  animation: pulse 1s;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.progress {
+  margin-top: 10px;
+  font-weight: bold;
+  color: #7f8c8d;
 }
