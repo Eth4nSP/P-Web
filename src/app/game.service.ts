@@ -11,13 +11,13 @@ interface Position {
 })
 export class GameService {
   private carPositionSubject = new BehaviorSubject<Position>({ row: 0, col: 0 });
-
+  
   constructor() {}
-
+  
   updateCarPosition(row: number, col: number): void {
     this.carPositionSubject.next({ row, col });
   }
-
+  
   getCarPosition(): Observable<Position> {
     return this.carPositionSubject.asObservable();
   }

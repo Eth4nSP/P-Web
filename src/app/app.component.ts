@@ -10,5 +10,5 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, BoardComponent]
 })
 export class AppComponent {
-  title = 'Juego Computer';
+  title = 'Juego de Palabras';
 }

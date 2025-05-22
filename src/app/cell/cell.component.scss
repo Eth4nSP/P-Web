@@ -10,12 +10,13 @@
   box-sizing: border-box;
   transition: all 0.3s ease;
   background-color: #f8f9fa;
+  position: relative;
 }
 
 .car-position {
-  background-color: #e0f7fa;
   position: relative;
-  box-shadow: inset 0 0 10px rgba(0, 150, 255, 0.3);
+  box-shadow: inset 0 0 15px rgba(0, 150, 255, 0.4);
+  border: 2px solid #0096ff;
 }
 
 .car-position::after {
@@ -23,6 +24,7 @@
   position: absolute;
   font-size: 24px;
   animation: bounce 0.5s infinite alternate;
+  z-index: 2;
 }
 
 @keyframes bounce {
@@ -33,6 +35,44 @@
 .found-letter {
   color: white;
   font-weight: bold;
-  background-color: #27ae60;
   transform: scale(0.95);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Estilos responsivos para celdas */
+@media (max-width: 768px) {
+  .cell {
+    width: 35px !important;
+    height: 35px !important;
+    font-size: 16px !important;
+  }
+
+  .car-position::after {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cell {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 14px !important;
+  }
+
+  .car-position::after {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cell {
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+
+  .car-position::after {
+    font-size: 22px;
+  }
 }

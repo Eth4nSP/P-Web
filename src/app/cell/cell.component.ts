@@ -12,4 +12,5 @@ export class CellComponent {
   @Input() value: string = '';
   @Input() isCarPosition: boolean = false;
   @Input() isFound: boolean = false;
+  @Input() foundColor: string | undefined;
 }
