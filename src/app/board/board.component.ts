@@ -63,19 +63,15 @@ export class BoardComponent implements OnInit, OnDestroy {
     switch(event.key) {
       case 'ArrowUp':
         this.moveCar('up');
-        this.steps++;
         break;
       case 'ArrowDown':
         this.moveCar('down');
-        this.steps++;
         break;
       case 'ArrowLeft':
         this.moveCar('left');
-        this.steps++;
         break;
       case 'ArrowRight':
         this.moveCar('right');
-        this.steps++;
         break;
     }
   }
@@ -124,8 +120,8 @@ export class BoardComponent implements OnInit, OnDestroy {
   // Inicializa el tablero con letras aleatorias y coloca las palabras
   initializeBoard(): void {
     // Crear un tablero de 10x10
-    const rows = 10;
-    const cols = 10;
+    const rows = 20;
+    const cols = 20;
     
     // Inicializar el tablero con letras aleatorias
     this.board = [];
@@ -527,6 +523,7 @@ export class BoardComponent implements OnInit, OnDestroy {
 
   countSteps(): number {
     // Contar los pasos desde la posición inicial del carro hasta la actual
+    
     return Math.abs(this.carPosition.row) + Math.abs(this.carPosition.col);
   }
 }

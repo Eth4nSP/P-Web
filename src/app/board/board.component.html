@@ -1,11 +1,9 @@
 <div class="game-container">
     <h2>Juego "Sopa de Letras"</h2>
-
     <div class="game-layout" [class.mobile-layout]="isMobileDevice" [class.desktop-layout]="!isMobileDevice">
         <!-- Tablero del juego -->
         <!-- BOTON DE HOME Y RESET-->
-        <a class="home" routerLink="/" routerLinkActive="router-link-active"><button>HOME</button></a>
-        <button class="reset" type="button" (click)="resetGame()">RESET</button>
+
         <div class="board">
             <div class="row" *ngFor="let row of board; let i = index">
                 <app-cell *ngFor="let cell of row; let j = index" [value]="cell" [isCarPosition]="isCarPosition(i, j)" [isFound]="isPositionFound(i, j)" [foundColor]="getPositionColor(i, j)"></app-cell>
@@ -26,6 +24,9 @@
                         {{ getWordProgress(word) }} de {{ word.length }} letras
                     </div>
                 </div>
+                <a class="home" routerLink="/" routerLinkActive="router-link-active"><button>HOME</button></a>
+                <button class="reset" type="button" (click)="resetGame()">RESET</button>
+
             </div>
         </div>
     </div>
@@ -42,6 +43,7 @@
 
     <!-- Instrucciones para teclado -->
     <div class="keyboard-instructions" *ngIf="!isMobileDevice">
+
         <p>También puedes usar las flechas de tu teclado para moverte</p>
     </div>
 </div>

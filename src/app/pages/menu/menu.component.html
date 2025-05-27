@@ -2,7 +2,19 @@
     <nav class="menu">
         <h1>Juego "Sopa de Letras"</h1>
         <ul>
-            <li><button><a routerLink="/game">Jugar</a></button></li>
+            <li style="position: relative;">
+                <button (click)="showDifficultyMenu = true">Jugar</button>
+                <!-- Menú de dificultad justo debajo de Jugar -->
+                <div class="difficulty-menu" *ngIf="showDifficultyMenu">
+                    <div class="difficulty-menu-content">
+                        <h2>Elige dificultad</h2>
+                        <button (click)="selectDifficulty('facil')">Fácil</button>
+                        <button (click)="selectDifficulty('medio')">Medio</button>
+                        <button (click)="selectDifficulty('dificil')">Difícil</button>
+                        <button (click)="showDifficultyMenu = false">Cancelar</button>
+                    </div>
+                </div>
+            </li>
             <li><a [routerLink]="['/score']">Puntaje</a></li>
         </ul>
     </nav>
