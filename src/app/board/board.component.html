@@ -1,59 +1,47 @@
 <div class="game-container">
-  <h2>Juego "Sopa de Letras"</h2>
+    <h2>Juego "Sopa de Letras"</h2>
 
-  <div class="game-layout" [class.mobile-layout]="isMobileDevice" [class.desktop-layout]="!isMobileDevice">
-    <!-- Tablero del juego -->
-    <div class="board">
-      <div
-        class="row"
-        *ngFor="let row of board; let i = index"
-      >
-        <app-cell
-          *ngFor="let cell of row; let j = index"
-          [value]="cell"
-          [isCarPosition]="isCarPosition(i, j)"
-          [isFound]="isPositionFound(i, j)"
-          [foundColor]="getPositionColor(i, j)"
-        ></app-cell>
-      </div>
-    </div>
+    <div class="game-layout" [class.mobile-layout]="isMobileDevice" [class.desktop-layout]="!isMobileDevice">
+        <!-- Tablero del juego -->
+        <!-- BOTON DE HOME Y RESET-->
+        <a class="home" routerLink="/" routerLinkActive="router-link-active"><button>HOME</button></a>
+        <button class="reset" type="button" (click)="resetGame()">RESET</button>
+        <div class="board">
+            <div class="row" *ngFor="let row of board; let i = index">
+                <app-cell *ngFor="let cell of row; let j = index" [value]="cell" [isCarPosition]="isCarPosition(i, j)" [isFound]="isPositionFound(i, j)" [foundColor]="getPositionColor(i, j)"></app-cell>
+            </div>
+        </div>
 
-    <!-- Panel lateral/inferior de palabras a encontrar -->
-    <div class="target-words">
-      <h3>Palabras a encontrar:</h3>
-      <div class="words-container">
-        <div
-          class="word-item"
-          *ngFor="let word of words"
-          [style.border-color]="wordColors[word]"
-        >
-          <div class="letters">
-            <span
-              *ngFor="let letter of word.split(''); let i = index"
-              [class.found]="isLetterFound(word, i)"
-              [style.background-color]="isLetterFound(word, i) ? wordColors[word] : ''"
-            >
+        <!-- Panel lateral/inferior de palabras a encontrar -->
+        <div class="target-words">
+            <h3>Palabras a encontrar:</h3>
+            <div class="words-container">
+                <div class="word-item" *ngFor="let word of words" [style.border-color]="wordColors[word]">
+                    <div class="letters">
+                        <span *ngFor="let letter of word.split(''); let i = index" [class.found]="isLetterFound(word, i)" [style.background-color]="isLetterFound(word, i) ? wordColors[word] : ''">
               {{ letter }}
             </span>
-          </div>
-          <div class="progress">
-            {{ getWordProgress(word) }} de {{ word.length }} letras
-          </div>
+                    </div>
+                    <div class="progress">
+                        {{ getWordProgress(word) }} de {{ word.length }} letras
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 
-  <!-- Controles de movimiento -->
-  <div class="controls">
-    <button type="button" class="btn-up" (click)="moveCar('up')">↑</button>
-    <button type="button" class="btn-left" (click)="moveCar('left')">←</button>
-    <button type="button" class="btn-right" (click)="moveCar('right')">→</button>
-    <button type="button" class="btn-down" (click)="moveCar('down')">↓</button>
-  </div>
+    <!-- Controles de movimiento -->
+    <div class="controls">
+        <button type="button" class="btn-up" (click)="moveCar('up')">↑</button>
+        <button type="button" class="btn-left" (click)="moveCar('left')">←</button>
+        <button type="button" class="btn-step">Step {{ steps }}</button>
+        <button type="button" class="btn-right" (click)="moveCar('right')">→</button>
+        <button type="button" class="btn-down" (click)="moveCar('down')">↓</button>
 
-  <!-- Instrucciones para teclado -->
-  <div class="keyboard-instructions" *ngIf="!isMobileDevice">
-    <p>También puedes usar las flechas de tu teclado para moverte</p>
-  </div>
+    </div>
+
+    <!-- Instrucciones para teclado -->
+    <div class="keyboard-instructions" *ngIf="!isMobileDevice">
+        <p>También puedes usar las flechas de tu teclado para moverte</p>
+    </div>
 </div>

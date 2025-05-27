@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { CellComponent } from '../cell/cell.component';
 import { GameService } from '../game.service';
 import { Subscription } from 'rxjs';
+import { RouterLink } from '@angular/router';
 
 interface FoundPosition {
   row: number;
@@ -23,12 +24,14 @@ interface WordSequence {
   standalone: true,
   imports: [
     CommonModule,
-    CellComponent
+    CellComponent,
+    RouterLink
   ],
   templateUrl: './board.component.html',
   styleUrls: ['./board.component.scss']
 })
 export class BoardComponent implements OnInit, OnDestroy {
+  steps: number = 0;
   board: string[][] = [];
   carPosition = { row: 0, col: 0 };
   words: string[] = ['COMPUTER', 'VARIABLE', 'FUNCTION', 'CLASS', 'PYTHON', 'GO'];
@@ -60,15 +63,19 @@ export class BoardComponent implements OnInit, OnDestroy {
     switch(event.key) {
       case 'ArrowUp':
         this.moveCar('up');
+        this.steps++;
         break;
       case 'ArrowDown':
         this.moveCar('down');
+        this.steps++;
         break;
       case 'ArrowLeft':
         this.moveCar('left');
+        this.steps++;
         break;
       case 'ArrowRight':
         this.moveCar('right');
+        this.steps++;
         break;
     }
   }
@@ -483,18 +490,43 @@ export class BoardComponent implements OnInit, OnDestroy {
     switch (direction) {
       case 'up':    
         if (newPos.row > 0) newPos.row--;
+        this.steps++;
         break;
       case 'down':  
         if (newPos.row < this.board.length - 1) newPos.row++;
+        this.steps++;
         break;
       case 'left':  
         if (newPos.col > 0) newPos.col--;
+        this.steps++;
         break;
       case 'right':
         if (newPos.col < this.board[0].length - 1) newPos.col++;
+        this.steps++;
         break;
     }
     
     this.gameService.updateCarPosition(newPos.row, newPos.col);
+  }
+
+  resetGame(): void {
+    // Reiniciar el juego
+    this.initializeBoard();
+    this.foundPositions = [];
+    this.activeWordSequences = [];
+    
+    // Reiniciar el estado de las letras encontradas
+    this.words.forEach(word => {
+      this.wordLetterStates[word] = Array(word.length).fill(false);
+    });
+    
+    // Colocar el auto en una nueva posición aleatoria
+    this.placeCarRandomly();
+    this.steps = 0;
+  }
+
+  countSteps(): number {
+    // Contar los pasos desde la posición inicial del carro hasta la actual
+    return Math.abs(this.carPosition.row) + Math.abs(this.carPosition.col);
   }
 }
