@@ -17,6 +17,7 @@ interface WordSequence {
   word: string;
   positions: { row: number, col: number }[];
   isComplete: boolean;
+  
 }
 
 @Component({
@@ -29,36 +30,78 @@ interface WordSequence {
   ],
   templateUrl: './board.component.html',
   styleUrls: ['./board.component.scss']
+  
 })
 export class BoardComponent implements OnInit, OnDestroy {
+  //Pasos
   steps: number = 0;
   board: string[][] = [];
   carPosition = { row: 0, col: 0 };
-  words: string[] = ['COMPUTER', 'VARIABLE', 'FUNCTION', 'CLASS', 'PYTHON', 'GO'];
+wordsDifficulty: string[][] = [
+  //Fácil: conceptos básicos
+  ['CODE', 'JAVA', 'HTML', 'LOOP', 'BUG', 'NODE', 'CSS'],
+  //Normal: términos intermedios
+  ['OBJECT', 'ARRAY', 'PYTHON', 'CLASS', 'METHOD', 'STRING', 'BINARY'],
+  //Difícil: conceptos avanzados
+  ['RECURSION', 'ASYNC', 'PROMISE', 'ALGORITHM', 'COMPLEXITY', 'THREAD', 'MUTABLE']
+];
+  words: string[] = [];
   foundPositions: FoundPosition[] = [];
   activeWordSequences: WordSequence[] = [];
   
   // Colores para cada palabra encontrada
-  wordColors: {[key: string]: string} = {
-    'COMPUTER': '#FF5733', // Rojo anaranjado
-    'VARIABLE': '#FFC300', // Amarillo dorado
-    'FUNCTION': '#FF8C00', // Naranja oscuro
-    'CLASS': '#FF6347',    // Tomate
-    'PYTHON': '#FF4500',   // Rojo-naranja
-    'GO': '#DC143C'        // Carmesí
-  };
+ wordColors: {[key: string]: string} = {
+  // Facil
+  'CODE': '#16a085',    // Verde azulado
+  'JAVA': '#f39c12',    // Amarillo anaranjado
+  'HTML': '#e67e22',    // Naranja quemado
+  'LOOP': '#2980b9',    // Azul intenso
+  'BUG': '#c0392b',     // Rojo oscuro
+  'NODE': '#27ae60',    // Verde bosque
+  'CSS': '#8e44ad',     // Morado
 
+  // Normal
+  'OBJECT': '#d35400',  // Naranja oscuro
+  'ARRAY': '#2980b9',   // Azul oscuro
+  'PYTHON': '#2ecc71',  // Verde brillante
+  'CLASS': '#9b59b6',   // Morado medio
+  'METHOD': '#34495e',  // Gris azulado
+  'STRING': '#e74c3c',  // Rojo fuerte
+  'BINARY': '#27ae60',  // Verde bosque
+
+  // Dificil
+  'RECURSION': '#c0392b',    // Rojo oscuro
+  'ASYNC': '#8e44ad',        // Morado oscuro
+  'PROMISE': '#2980b9',      // Azul intenso
+  'ALGORITHM': '#f39c12',    // Amarillo anaranjado
+  'COMPLEXITY': '#34495e',   // Gris azulado
+  'THREAD': '#16a085',       // Verde azulado
+  'MUTABLE': '#e67e22'       // Naranja quemado
+};
   // Objeto para rastrear las letras encontradas de cada palabra
   wordLetterStates: { [key: string]: boolean[] } = {};
   private subscription: Subscription | null = null;
 
   // Detectar dispositivo para adaptar el layout
   isMobileDevice: boolean = false;
+
+  // Timer variables
+  timer: number = 0;
+  timerInterval: any = null;
+  timeLeft: number = 0;
+  isGameOver: boolean = false;
+  keyboardLocked: boolean = false;
+  showWinMenu: boolean = false; // Nuevo: mostrar menú de victoria
+  finalScore: number = 0; // Nuevo: puntaje final
   
   constructor(private gameService: GameService) { }
   
   @HostListener('window:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
+    if (this.keyboardLocked || this.isGameOver) {
+      event.preventDefault();
+      return;
+    }
     // Controlar el juego con las teclas de flecha
     switch(event.key) {
       case 'ArrowUp':
@@ -86,6 +129,20 @@ export class BoardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    const dificultad: string = localStorage.getItem('dificultad') ?? 'facil'; // Guardar dificultad por defecto
+    switch (dificultad) {
+  case 'facil':
+    this.words = [...this.wordsDifficulty[0]]; // Clonar para no mutar el original
+    break;
+  case 'medio':
+    this.words = [...this.wordsDifficulty[1]];
+    break;
+  case 'dificil':
+    this.words = [...this.wordsDifficulty[2]];
+    break;
+  default:
+    this.words = [...this.wordsDifficulty[0]]; // Siempre un fallback
+}
     // Verificar el tipo de dispositivo
     this.checkDeviceType();
     
@@ -108,6 +165,23 @@ export class BoardComponent implements OnInit, OnDestroy {
       // Verificar si la posición actual puede continuar una secuencia de palabra
       this.checkForWordSequence();
     });
+    
+    // Definir tiempo según dificultad
+    switch (dificultad) {
+      case 'facil':
+        this.timeLeft = 240; // 2 minutos
+        break;
+      case 'medio':
+        this.timeLeft = 180; // 1.5 minutos
+        break;
+      case 'dificil':
+        this.timeLeft = 120; // 1 minuto
+        break;
+      default:
+        this.timeLeft = 240;
+    }
+    this.isGameOver = false;
+    this.startTimer();
   }
 
   ngOnDestroy(): void {
@@ -115,13 +189,16 @@ export class BoardComponent implements OnInit, OnDestroy {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
   }
 
   // Inicializa el tablero con letras aleatorias y coloca las palabras
   initializeBoard(): void {
     // Crear un tablero de 10x10
-    const rows = 20;
-    const cols = 20;
+    const rows = localStorage.getItem('dificultad') === 'facil' ? 10 : localStorage.getItem('dificultad') === 'medio' ? 15 : 20;
+    const cols = localStorage.getItem('dificultad') === 'facil' ? 10 : localStorage.getItem('dificultad') === 'medio' ? 15 : 20;
     
     // Inicializar el tablero con letras aleatorias
     this.board = [];
@@ -440,8 +517,27 @@ export class BoardComponent implements OnInit, OnDestroy {
         color: this.wordColors[word]
       });
     }
+    // Si ya se encontraron todas las palabras, mostrar menú de victoria
+    if (this.words.every(w => this.isWordComplete(w))) {
+      this.finalScore = this.calcularPuntaje();
+      this.showWinMenu = true;
+      this.lockKeyboard();
+      this.isGameOver = true;
+      if (this.timerInterval) clearInterval(this.timerInterval);
+    }
   }
-  
+
+  // Nuevo: calcular puntaje
+  calcularPuntaje(): number {
+    // Ejemplo: más puntos por tiempo restante y menos pasos
+   const dificultad = localStorage.getItem('dificultad') || 'medio';
+
+    const factor = dificultad === 'facil' ? 0.7 
+              : dificultad === 'medio' ? 0.5 
+              : 0.3;
+    return (this.timeLeft * factor) - this.steps;
+  }
+
   // Comprobar si una palabra está completamente encontrada
   isWordComplete(word: string): boolean {
     if (!this.wordLetterStates[word]) {
@@ -505,6 +601,20 @@ export class BoardComponent implements OnInit, OnDestroy {
     this.gameService.updateCarPosition(newPos.row, newPos.col);
   }
 
+  startTimer() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
+    this.timerInterval = setInterval(() => {
+      if (this.timeLeft > 0) {
+        this.timeLeft--;
+      } else {
+        this.isGameOver = true;
+        clearInterval(this.timerInterval);
+      }
+    }, 1000);
+  }
+
   resetGame(): void {
     // Reiniciar el juego
     this.initializeBoard();
@@ -519,6 +629,36 @@ export class BoardComponent implements OnInit, OnDestroy {
     // Colocar el auto en una nueva posición aleatoria
     this.placeCarRandomly();
     this.steps = 0;
+    this.isGameOver = false;
+    this.showWinMenu = false;
+    this.finalScore = 0;
+    this.unlockKeyboard();
+    // Reiniciar el temporizador
+    const dificultad: string = localStorage.getItem('dificultad') ?? 'facil';
+    switch (dificultad) {
+      case 'facil':
+        this.timeLeft = 240;
+        break;
+      case 'medio':
+        this.timeLeft = 180; 
+        break;
+      case 'dificil':
+        this.timeLeft = 120;
+        break;
+      default:
+        this.timeLeft = 240;
+    }
+    this.startTimer();
+  }
+
+  // Método para bloquear el teclado
+  lockKeyboard() {
+    this.keyboardLocked = true;
+  }
+
+  // Método para desbloquear el teclado
+  unlockKeyboard() {
+    this.keyboardLocked = false;
   }
 
   countSteps(): number {
@@ -526,4 +666,6 @@ export class BoardComponent implements OnInit, OnDestroy {
     
     return Math.abs(this.carPosition.row) + Math.abs(this.carPosition.col);
   }
+
+
 }

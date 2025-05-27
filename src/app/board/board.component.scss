@@ -378,3 +378,99 @@ button:active {
         box-shadow: 0 0 0 rgba(255, 255, 255, 0.7);
     }
 }
+
+
+/* Temporizador y modal de Game Over */
+
+.timer {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #2c3e50;
+    background: #eaf6fb;
+    border-radius: 8px;
+    padding: 8px 18px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.08);
+    transition: background 0.3s, color 0.3s;
+}
+
+.timer.game-over {
+    color: #e74c3c;
+    background: #ffeaea;
+}
+
+.game-over-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+    animation: fadeInBg 0.3s;
+}
+
+.game-over-content {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    padding: 36px 32px 28px 32px;
+    min-width: 260px;
+    text-align: center;
+    animation: popIn 0.35s cubic-bezier(.68, -0.55, .27, 1.55);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.game-over-content h2 {
+    color: #e74c3c;
+    margin-bottom: 10px;
+    font-size: 2rem;
+}
+
+.game-over-content p {
+    color: #2c3e50;
+    margin-bottom: 22px;
+    font-size: 1.1rem;
+}
+
+.game-over-content button,
+.game-over-content .home button {
+    margin: 8px 0 0 0;
+    width: 160px;
+    padding: 12px 0;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(90deg, #3498db 60%, #8e44ad 100%);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.08);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+}
+
+.game-over-content button:hover,
+.game-over-content .home button:hover {
+    background: linear-gradient(90deg, #8e44ad 60%, #3498db 100%);
+    transform: scale(1.04);
+    box-shadow: 0 4px 16px rgba(52, 152, 219, 0.18);
+}
+
+@media (max-width: 600px) {
+    .game-over-content {
+        min-width: 0;
+        width: 90vw;
+        padding: 18px 4vw 12px 4vw;
+    }
+    .game-over-content button,
+    .game-over-content .home button {
+        width: 100%;
+        font-size: 1rem;
+    }
+}
