@@ -1,0 +1,94 @@
+.container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    //background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+h1 {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+    user-select: none;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* El cuadro que contiene el menú */
+
+.menu {
+    //background: rgba(255, 255, 255, 0.1);
+    //background: linear-gradient(135deg, #1e3c72, #2a5298);
+    background-color: #3498db;
+    /* semitransparente para destacar */
+    padding: 20px 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    max-width: 320px;
+    width: 90vw;
+    /* que no sea más ancho que la pantalla en móviles */
+    margin: 0 auto;
+}
+
+.menu ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.menu li {
+    flex: 1 1 100px;
+    /* mínimo 100px, se ajusta */
+}
+
+.menu li button {
+    width: 100%;
+    padding: 12px 0;
+    font-size: 1.1rem;
+    cursor: pointer;
+    border: none;
+    background-color: #ff4757;
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(255, 71, 87, 0.5);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    user-select: none;
+}
+
+.menu li button:hover {
+    background-color: #e84118;
+    transform: scale(1.05);
+}
+
+.menu li a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    width: 100%;
+}
+
+
+/* Responsive: en pantallas chicas, botones verticales */
+
+@media (max-width: 400px) {
+    .menu ul {
+        flex-direction: column;
+        gap: 15px;
+    }
+    h1 {
+        font-size: 1.5rem;
+        max-width: 90vw;
+    }
+}
