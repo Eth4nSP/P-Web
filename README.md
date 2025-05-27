@@ -1,64 +1,59 @@
-<<<<<<< HEAD
-# P-Web
-Repositorio para el proyecto de web
-=======
-# ComputerGame
+# 🚗💻 Sopa de Letras: ¡El Juego de Programadores!
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.12.
+¡Bienvenido a **Sopa de Letras**! Un juego web hecho con Angular donde tu misión es encontrar palabras de programación moviendo un auto 🚗 por el tablero. ¿Listo para poner a prueba tu lógica y tus conocimientos tech?
 
-## Development server
+---
 
-To start a local development server, run:
+## 🎮 ¿Cómo jugar?
 
-```bash
-ng serve
-```
+1. Ingresa al menú principal y haz clic en **Jugar**.
+2. Elige la dificultad: Fácil, Medio o Difícil.
+3. Usa las flechas para mover el auto y encuentra las palabras ocultas en el tablero.
+4. ¡Desbloquea todas las palabras y compite por el mejor puntaje!
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+## 🛠️ Tecnologías
+- **Angular 16**
+- RxJS
+- TypeScript
+- SCSS
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+---
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## 🚀 Comenzar
 
 ```bash
-ng generate --help
+npm install
+npm start
 ```
+Abre tu navegador en [http://localhost:4200](http://localhost:4200) y ¡a jugar!
 
-## Building
+---
 
-To build the project run:
+## 🏆 Puntaje
+Consulta tu puntaje y mejora tus tiempos en la sección **Puntaje** del menú.
 
-```bash
-ng build
-```
+---
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## 📁 Estructura del Proyecto
+- `src/app/board/` — Lógica y UI del tablero
+- `src/app/pages/menu/` — Menú principal y selección de dificultad
+- `src/app/pages/puntaje/` — Visualización de puntajes
+- `src/app/game.service.ts` — Servicio central del juego
 
-## Running unit tests
+---
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## 💡 ¿Por qué este juego es perrón?
+- Palabras de programación en todos los niveles
+- Animaciones y UI moderna
+- ¡Competencia y diversión asegurada!
 
-```bash
-ng test
-```
+---
 
-## Running end-to-end tests
+## 👨‍💻 Autor
+Hecho con pasión por programadores, para programadores.
 
-For end-to-end (e2e) testing, run:
+---
 
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
->>>>>>> 780e980 (codigo en proceso)
+¡Que gane el mejor dev! 🚗💨
