@@ -1,24 +1,12 @@
 <div class="game-container">
-  <h2>Juego "Sopa de Letras"</h2>
+  <!-- Header with timer -->
+  <div class="game-header">
+    <h2>Juego "Sopa de Letras"</h2>
+    <div class="timer">{{ formattedTime }}</div>
+  </div>
 
   <div class="game-layout" [class.mobile-layout]="isMobileDevice" [class.desktop-layout]="!isMobileDevice">
-    <!-- Tablero del juego -->
-    <div class="board">
-      <div
-        class="row"
-        *ngFor="let row of board; let i = index"
-      >
-        <app-cell
-          *ngFor="let cell of row; let j = index"
-          [value]="cell"
-          [isCarPosition]="isCarPosition(i, j)"
-          [isFound]="isPositionFound(i, j)"
-          [foundColor]="getPositionColor(i, j)"
-        ></app-cell>
-      </div>
-    </div>
-
-    <!-- Panel lateral/inferior de palabras a encontrar -->
+    <!-- Panel lateral/inferior de palabras a encontrar (MOVIDO A LA IZQUIERDA) -->
     <div class="target-words">
       <h3>Palabras a encontrar:</h3>
       <div class="words-container">
@@ -26,6 +14,7 @@
           class="word-item"
           *ngFor="let word of words"
           [style.border-color]="wordColors[word]"
+          [class.hinted]="isWordHinted(word)"
         >
           <div class="letters">
             <span
@@ -42,9 +31,26 @@
         </div>
       </div>
     </div>
+
+    <!-- Tablero del juego -->
+    <div class="board">
+      <div
+        class="row"
+        *ngFor="let row of board; let i = index"
+      >
+        <app-cell
+          *ngFor="let cell of row; let j = index"
+          [value]="cell"
+          [isCarPosition]="isCarPosition(i, j)"
+          [isFound]="isPositionFound(i, j)"
+          [foundColor]="getPositionColor(i, j)"
+          [attr.data-position]="i + '-' + j"
+        ></app-cell>
+      </div>
+    </div>
   </div>
 
-  <!-- Controles de movimiento -->
+  <!-- Controles de movimiento (MÁS GRANDES) -->
   <div class="controls">
     <button type="button" class="btn-up" (click)="moveCar('up')">↑</button>
     <button type="button" class="btn-left" (click)="moveCar('left')">←</button>
@@ -52,8 +58,50 @@
     <button type="button" class="btn-down" (click)="moveCar('down')">↓</button>
   </div>
 
+  <!-- Botones de acción -->
+  <div class="action-buttons">
+    <!-- Botón de pista -->
+    <button 
+      type="button" 
+      class="hint-button" 
+      (click)="useHint()" 
+      [disabled]="hintsRemaining === 0 || gameCompleted"
+    >
+      💡
+      <span class="hint-count">{{ hintsRemaining }}</span>
+    </button>
+
+    <!-- Botón de reiniciar -->
+    <button type="button" class="reset-button" (click)="resetGame()">
+      🔄
+    </button>
+  </div>
+
   <!-- Instrucciones para teclado -->
   <div class="keyboard-instructions" *ngIf="!isMobileDevice">
     <p>También puedes usar las flechas de tu teclado para moverte</p>
+  </div>
+</div>
+
+<!-- Modal de completación del juego -->
+<div class="modal-overlay" *ngIf="showCompletionModal" (click)="closeCompletionModal()">
+  <div class="completion-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>¡MUY BIEN!</h2>
+      <button class="close-button" (click)="closeCompletionModal()">✕</button>
+    </div>
+    <div class="modal-content">
+      <h3>Has resuelto</h3>
+      <h3>la Sopa de letras</h3>
+      <div class="completion-time">{{ completionTime }}</div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="play-again-button" (click)="playAgain()">
+        Jugar otra
+      </button>
+      <button type="button" class="exit-button" (click)="closeCompletionModal()">
+        Salir
+      </button>
+    </div>
   </div>
 </div>

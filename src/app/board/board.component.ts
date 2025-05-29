@@ -35,6 +35,24 @@ export class BoardComponent implements OnInit, OnDestroy {
   foundPositions: FoundPosition[] = [];
   activeWordSequences: WordSequence[] = [];
   
+  // Timer properties
+  startTime: number = 0;
+  currentTime: number = 0;
+  timerInterval: any;
+  formattedTime: string = '00:00';
+  gameStarted: boolean = false;
+  gameCompleted: boolean = false;
+  
+  // Hints properties
+  hintsRemaining: number = 3;
+  maxHints: number = 3;
+  hintedWord: string | null = null;
+  hintAnimation: boolean = false;
+  
+  // Game completion modal
+  showCompletionModal: boolean = false;
+  completionTime: string = '';
+
   // Colores para cada palabra encontrada
   wordColors: {[key: string]: string} = {
     'COMPUTER': '#FF5733', // Rojo anaranjado
@@ -47,13 +65,14 @@ export class BoardComponent implements OnInit, OnDestroy {
 
   // Objeto para rastrear las letras encontradas de cada palabra
   wordLetterStates: { [key: string]: boolean[] } = {};
+
   private subscription: Subscription | null = null;
 
   // Detectar dispositivo para adaptar el layout
   isMobileDevice: boolean = false;
-  
+ 
   constructor(private gameService: GameService) { }
-  
+ 
   @HostListener('window:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
     // Controlar el juego con las teclas de flecha
@@ -83,35 +102,126 @@ export class BoardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Verificar el tipo de dispositivo
     this.checkDeviceType();
+    this.initializeGame();
+  }
+
+  ngOnDestroy(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
+  }
+
+  initializeGame(): void {
+    // Reset all game state
+    this.gameStarted = false;
+    this.gameCompleted = false;
+    this.showCompletionModal = false;
+    this.hintsRemaining = this.maxHints;
+    this.hintedWord = null;
+    this.hintAnimation = false;
+    this.currentTime = 0;
+    this.formattedTime = '00:00';
     
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
+
     // Inicializar el estado de las letras encontradas para cada palabra
     this.words.forEach(word => {
       this.wordLetterStates[word] = Array(word.length).fill(false);
     });
-    
+   
     // Inicializar el array de posiciones encontradas y secuencias de palabras
     this.foundPositions = [];
     this.activeWordSequences = [];
-    
+   
     // Inicializar el tablero con letras aleatorias y colocar las palabras
     this.initializeBoard();
-    
+   
     // Suscribirse a los cambios de posición del carro
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    
     this.subscription = this.gameService.getCarPosition().subscribe(position => {
       this.carPosition = position;
       
+      // Start timer on first move
+      if (!this.gameStarted) {
+        this.startTimer();
+        this.gameStarted = true;
+      }
+     
       // Verificar si la posición actual puede continuar una secuencia de palabra
       this.checkForWordSequence();
     });
   }
 
-  ngOnDestroy(): void {
-    // Limpiar la suscripción para evitar memory leaks
-    if (this.subscription) {
-      this.subscription.unsubscribe();
+  startTimer(): void {
+    this.startTime = Date.now();
+    this.timerInterval = setInterval(() => {
+      if (!this.gameCompleted) {
+        this.currentTime = Date.now() - this.startTime;
+        this.updateFormattedTime();
+      }
+    }, 1000);
+  }
+
+  updateFormattedTime(): void {
+    const seconds = Math.floor(this.currentTime / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    this.formattedTime = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+
+  useHint(): void {
+    if (this.hintsRemaining > 0 && !this.gameCompleted) {
+      const uncompletedWords = this.words.filter(word => !this.isWordComplete(word));
+      
+      if (uncompletedWords.length > 0) {
+        // Select random uncompleted word
+        const randomWord = uncompletedWords[Math.floor(Math.random() * uncompletedWords.length)];
+        this.hintedWord = randomWord;
+        this.hintAnimation = true;
+        this.hintsRemaining--;
+        
+        // Remove hint animation after 3 seconds
+        setTimeout(() => {
+          this.hintAnimation = false;
+          this.hintedWord = null;
+        }, 3000);
+      }
     }
+  }
+
+  resetGame(): void {
+    this.initializeGame();
+  }
+
+  checkGameCompletion(): void {
+    const allWordsFound = this.words.every(word => this.isWordComplete(word));
+    
+    if (allWordsFound && !this.gameCompleted) {
+      this.gameCompleted = true;
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+      }
+      this.completionTime = this.formattedTime;
+      this.showCompletionModal = true;
+    }
+  }
+
+  closeCompletionModal(): void {
+    this.showCompletionModal = false;
+  }
+
+  playAgain(): void {
+    this.showCompletionModal = false;
+    this.initializeGame();
   }
 
   // Inicializa el tablero con letras aleatorias y coloca las palabras
@@ -119,7 +229,7 @@ export class BoardComponent implements OnInit, OnDestroy {
     // Crear un tablero de 10x10
     const rows = 10;
     const cols = 10;
-    
+   
     // Inicializar el tablero con letras aleatorias
     this.board = [];
     for (let i = 0; i < rows; i++) {
@@ -130,10 +240,10 @@ export class BoardComponent implements OnInit, OnDestroy {
         this.board[i][j] = randomLetter;
       }
     }
-    
+   
     // Colocar las palabras en el tablero de forma aleatoria
     this.placeWordsRandomly();
-    
+   
     // Colocar el auto en una posición aleatoria que no contenga una letra de palabra
     this.placeCarRandomly();
   }
@@ -142,24 +252,24 @@ export class BoardComponent implements OnInit, OnDestroy {
   placeWordsRandomly(): void {
     // Mapa para rastrear las posiciones ocupadas
     const occupiedPositions = new Set<string>();
-    
+   
     // Colocar cada palabra
     for (const word of this.words) {
       let placed = false;
       let attempts = 0;
       const maxAttempts = 100; // Límite de intentos por palabra
-      
+     
       while (!placed && attempts < maxAttempts) {
         attempts++;
-        
+       
         // Elegir una orientación aleatoria: 0=horizontal, 1=vertical, 4=diagonal (tipo grada)
         const orientation = Math.floor(Math.random() * 3);
         const actualOrientation = orientation === 2 ? 4 : orientation; // Si es 2, usamos la diagonal (4)
-        
+       
         // Intentar colocar la palabra con la orientación elegida
         placed = this.tryPlaceWord(word, actualOrientation, occupiedPositions);
       }
-      
+     
       if (!placed) {
         console.warn(`No se pudo colocar la palabra: ${word}`);
       }
@@ -170,11 +280,11 @@ export class BoardComponent implements OnInit, OnDestroy {
   tryPlaceWord(word: string, orientation: number, occupiedPositions: Set<string>): boolean {
     const rows = this.board.length;
     const cols = this.board[0].length;
-    
+   
     // Determinar límites para la posición inicial según la orientación
     let startRowLimit = rows;
     let startColLimit = cols;
-    
+   
     switch (orientation) {
       case 0: // Horizontal
         startColLimit = cols - word.length + 1;
@@ -187,19 +297,19 @@ export class BoardComponent implements OnInit, OnDestroy {
         startColLimit = cols - Math.ceil(word.length / 2);
         break;
     }
-    
+   
     // Si no hay espacio suficiente, regresar falso
     if (startRowLimit <= 0 || startColLimit <= 0) {
       return false;
     }
-    
+   
     // Elegir una posición inicial aleatoria
     const startRow = Math.floor(Math.random() * startRowLimit);
     const startCol = Math.floor(Math.random() * startColLimit);
-    
+   
     // Verificar si la palabra cabe en la orientación seleccionada
     const positions: [number, number][] = [];
-    
+   
     if (orientation === 4) { // Diagonal tipo grada
       return this.placeWordAsGradient(word, startRow, startCol, occupiedPositions);
     } else {
@@ -208,35 +318,35 @@ export class BoardComponent implements OnInit, OnDestroy {
         [0, 1],  // Horizontal
         [1, 0],  // Vertical
       ];
-      
+     
       const [rowDir, colDir] = directions[orientation];
-      
+     
       // Verificar si la palabra cabe sin superponerse con otras
       for (let i = 0; i < word.length; i++) {
         const row = startRow + i * rowDir;
         const col = startCol + i * colDir;
-        
+       
         // Verificar si está dentro del tablero
         if (row < 0 || row >= rows || col < 0 || col >= cols) {
           return false;
         }
-        
+       
         // Verificar si la posición ya está ocupada por otra letra
         const posKey = `${row},${col}`;
         if (occupiedPositions.has(posKey) && this.board[row][col] !== word[i]) {
           return false;
         }
-        
+       
         positions.push([row, col]);
       }
-      
+     
       // Colocar la palabra en el tablero
       for (let i = 0; i < word.length; i++) {
         const [row, col] = positions[i];
         this.board[row][col] = word[i];
         occupiedPositions.add(`${row},${col}`);
       }
-      
+     
       return true;
     }
   }
@@ -245,17 +355,17 @@ export class BoardComponent implements OnInit, OnDestroy {
   placeWordAsGradient(word: string, startRow: number, startCol: number, occupiedPositions: Set<string>): boolean {
     const rows = this.board.length;
     const cols = this.board[0].length;
-    
+   
     // Elegir dirección de la grada: 0=diagonal↘, 1=diagonal↗
     const direction = Math.floor(Math.random() * 2);
-    
+   
     // Posiciones para esta palabra
     const wordPositions: [number, number][] = [];
-    
+   
     // Intentar colocar cada letra de la palabra
     for (let i = 0; i < word.length; i++) {
       let currentRow, currentCol;
-      
+     
       if (direction === 0) { // Diagonal hacia abajo-derecha
         currentRow = startRow + i;
         currentCol = startCol + i;
@@ -263,28 +373,28 @@ export class BoardComponent implements OnInit, OnDestroy {
         currentRow = startRow - i;
         currentCol = startCol + i;
       }
-      
+     
       // Verificar si la posición está fuera del tablero
       if (currentRow < 0 || currentRow >= rows || currentCol < 0 || currentCol >= cols) {
         return false;
       }
-      
+     
       // Verificar si la posición está ocupada
       const posKey = `${currentRow},${currentCol}`;
       if (occupiedPositions.has(posKey) && this.board[currentRow][currentCol] !== word[i]) {
         return false;
       }
-      
+     
       wordPositions.push([currentRow, currentCol]);
     }
-    
+   
     // Colocar la palabra en el tablero
     for (let i = 0; i < word.length; i++) {
       const [row, col] = wordPositions[i];
       this.board[row][col] = word[i];
       occupiedPositions.add(`${row},${col}`);
     }
-    
+   
     return true;
   }
 
@@ -292,32 +402,32 @@ export class BoardComponent implements OnInit, OnDestroy {
   placeCarRandomly(): void {
     const rows = this.board.length;
     const cols = this.board[0].length;
-    
+   
     // Crear un conjunto de posiciones ocupadas por palabras
     const wordPositions = new Set<string>();
     this.foundPositions.forEach(pos => {
       wordPositions.add(`${pos.row},${pos.col}`);
     });
-    
+   
     // Intentar encontrar una posición aleatoria no ocupada
     let placed = false;
     let attempts = 0;
     const maxAttempts = 100;
-    
+   
     while (!placed && attempts < maxAttempts) {
       const row = Math.floor(Math.random() * rows);
       const col = Math.floor(Math.random() * cols);
-      
+     
       // Verificar si no es parte de una palabra
       if (!wordPositions.has(`${row},${col}`)) {
         this.carPosition = { row, col };
         this.gameService.updateCarPosition(row, col);
         placed = true;
       }
-      
+     
       attempts++;
     }
-    
+   
     // Si no se encontró una posición libre, usar la posición (0,0)
     if (!placed) {
       this.carPosition = { row: 0, col: 0 };
@@ -330,15 +440,15 @@ export class BoardComponent implements OnInit, OnDestroy {
     const currentRow = this.carPosition.row;
     const currentCol = this.carPosition.col;
     const currentLetter = this.board[currentRow][currentCol];
-    
+   
     // Para cada palabra, comprobamos si se puede iniciar una nueva secuencia
     for (const word of this.words) {
       // Si la letra actual coincide con la primera letra de la palabra
       if (word[0] === currentLetter) {
         // Verificar si esta posición ya es parte de una secuencia encontrada
-        const alreadyFound = this.foundPositions.some(pos => 
+        const alreadyFound = this.foundPositions.some(pos =>
           pos.row === currentRow && pos.col === currentCol);
-          
+         
         if (!alreadyFound) {
           // Iniciar una nueva secuencia potencial
           this.activeWordSequences.push({
@@ -349,39 +459,39 @@ export class BoardComponent implements OnInit, OnDestroy {
         }
       }
     }
-    
+   
     // Comprobamos si la letra actual continúa alguna secuencia activa
     this.continueWordSequences(currentRow, currentCol, currentLetter);
   }
-  
+ 
   // Verificar si la posición actual continúa alguna secuencia activa
   continueWordSequences(row: number, col: number, letter: string): void {
     const newSequences: WordSequence[] = [];
-    
+   
     // Para cada secuencia activa
     for (const sequence of this.activeWordSequences) {
       if (sequence.isComplete) {
         newSequences.push(sequence);
         continue;
       }
-      
+     
       const word = sequence.word;
       const nextLetterIndex = sequence.positions.length;
-      
+     
       // Si ya hemos encontrado toda la palabra, continuamos
       if (nextLetterIndex >= word.length) {
         continue;
       }
-      
+     
       // Si la letra actual coincide con la siguiente letra esperada
       if (word[nextLetterIndex] === letter) {
         // La última posición en la secuencia
         const lastPos = sequence.positions[sequence.positions.length - 1];
-        
+       
         // Comprobar si la posición actual es adyacente a la última
         const rowDiff = Math.abs(row - lastPos.row);
         const colDiff = Math.abs(col - lastPos.col);
-        
+       
         // Si la posición actual es adyacente a la última posición
         if ((rowDiff <= 1 && colDiff <= 1) && (rowDiff + colDiff > 0)) {
           // Crear una copia de la secuencia y añadir la nueva posición
@@ -390,13 +500,16 @@ export class BoardComponent implements OnInit, OnDestroy {
             positions: [...sequence.positions, { row, col }],
             isComplete: nextLetterIndex + 1 === word.length
           };
-          
+         
           // Si hemos completado la palabra
           if (updatedSequence.isComplete) {
             // Marcar las letras como encontradas
             this.markWordAsFound(updatedSequence);
+            
+            // Trigger word found animation
+            this.triggerWordFoundAnimation(updatedSequence.word);
           }
-          
+         
           newSequences.push(updatedSequence);
         } else {
           // Si no es adyacente, mantenemos la secuencia original
@@ -407,27 +520,46 @@ export class BoardComponent implements OnInit, OnDestroy {
         newSequences.push(sequence);
       }
     }
-    
+   
     this.activeWordSequences = newSequences;
   }
-  
+
+  triggerWordFoundAnimation(word: string): void {
+    // Add animation class to found positions
+    const wordPositions = this.foundPositions.filter(pos => pos.word === word);
+    wordPositions.forEach(pos => {
+      const cellElement = document.querySelector(`[data-position="${pos.row}-${pos.col}"]`);
+      if (cellElement) {
+        cellElement.classList.add('word-found-animation');
+        setTimeout(() => {
+          cellElement.classList.remove('word-found-animation');
+        }, 1000);
+      }
+    });
+    
+    // Check if game is completed
+    setTimeout(() => {
+      this.checkGameCompletion();
+    }, 500);
+  }
+ 
   // Marcar una palabra como encontrada
   markWordAsFound(sequence: WordSequence): void {
     const word = sequence.word;
-    
+   
     // Verificar si esta palabra ya ha sido completamente encontrada
     const isAlreadyComplete = this.isWordComplete(word);
     if (isAlreadyComplete) {
       return;
     }
-    
+   
     // Marcar todas las letras de la palabra como encontradas
     for (let i = 0; i < sequence.positions.length; i++) {
       const pos = sequence.positions[i];
-      
+     
       // Actualizar el estado de las letras encontradas
       this.wordLetterStates[word][i] = true;
-      
+     
       // Añadir a las posiciones encontradas
       this.foundPositions.push({
         row: pos.row,
@@ -438,13 +570,13 @@ export class BoardComponent implements OnInit, OnDestroy {
       });
     }
   }
-  
+ 
   // Comprobar si una palabra está completamente encontrada
   isWordComplete(word: string): boolean {
     if (!this.wordLetterStates[word]) {
       return false;
     }
-    
+   
     return this.wordLetterStates[word].every(found => found);
   }
 
@@ -477,9 +609,13 @@ export class BoardComponent implements OnInit, OnDestroy {
     return count;
   }
 
+  isWordHinted(word: string): boolean {
+    return this.hintedWord === word && this.hintAnimation;
+  }
+
   moveCar(direction: 'up'|'down'|'left'|'right'): void {
     const newPos = { ...this.carPosition };
-    
+   
     switch (direction) {
       case 'up':    
         if (newPos.row > 0) newPos.row--;
@@ -494,7 +630,7 @@ export class BoardComponent implements OnInit, OnDestroy {
         if (newPos.col < this.board[0].length - 1) newPos.col++;
         break;
     }
-    
+   
     this.gameService.updateCarPosition(newPos.row, newPos.col);
   }
 }

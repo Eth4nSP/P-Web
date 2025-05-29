@@ -9,13 +9,36 @@
   border-radius: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   max-width: 100%;
+  position: relative;
+}
+
+/* Header with timer */
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 15px;
 }
 
 h2 {
   color: #2c3e50;
-  margin-bottom: 15px;
+  margin: 0;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
   text-align: center;
+  flex-grow: 1;
+}
+
+.timer {
+  background-color: #34495e;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 18px;
+  font-weight: bold;
+  min-width: 70px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Layout adaptativo según el dispositivo */
@@ -27,7 +50,7 @@ h2 {
   margin-bottom: 20px;
 }
 
-/* Layout para escritorio: tablero a la izquierda y palabras a la derecha */
+/* Layout para escritorio: palabras a la IZQUIERDA y tablero a la derecha */
 .desktop-layout {
   flex-direction: row;
   align-items: flex-start;
@@ -53,40 +76,41 @@ h2 {
   display: flex;
 }
 
-/* Estilos mejorados para los botones de control */
+/* Estilos mejorados para los botones de control (MÁS GRANDES) */
 .controls {
   margin-top: 20px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  gap: 8px;
+  gap: 12px;
   width: 100%;
-  max-width: 200px; /* Aumentado el tamaño */
+  max-width: 280px; /* Aumentado significativamente */
 }
 
 button {
-  width: 60px; /* Aumentado para mejor visibilidad y uso */
-  height: 60px; /* Aumentado para mejor visibilidad y uso */
+  width: 80px; /* Mucho más grande */
+  height: 80px; /* Mucho más grande */
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 28px; /* Aumentado el tamaño de las flechas */
+  font-size: 36px; /* Flechas más grandes */
   cursor: pointer;
   color: white;
   border: none;
-  border-radius: 12px; /* Redondeado más pronunciado */
-  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.2), inset 0 2px 0 rgba(255, 255, 255, 0.5);
+  border-radius: 15px; /* Más redondeado */
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2), inset 0 2px 0 rgba(255, 255, 255, 0.5);
   transition: all 0.1s ease;
-  touch-action: manipulation; /* Mejora para dispositivos táctiles */
+  touch-action: manipulation;
+  font-weight: bold;
 }
 
 button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.2), inset 0 2px 0 rgba(255, 255, 255, 0.5);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.2), inset 0 2px 0 rgba(255, 255, 255, 0.5);
 }
 
 button:active {
-  transform: translateY(3px);
+  transform: translateY(4px);
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
@@ -94,37 +118,102 @@ button:active {
 .btn-up {
   grid-column: 2;
   grid-row: 1;
-  background-color: #3498db; /* Azul */
+  background-color: #3498db;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
 .btn-left {
   grid-column: 1;
   grid-row: 2;
-  background-color: #f1c40f; /* Amarillo */
+  background-color: #f1c40f;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
 .btn-right {
   grid-column: 3;
   grid-row: 2;
-  background-color: #2ecc71; /* Verde */
+  background-color: #2ecc71;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
 .btn-down {
   grid-column: 2;
   grid-row: 3;
-  background-color: #e74c3c; /* Rojo */
+  background-color: #e74c3c;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
-/* Estilos para el panel de palabras */
+/* Botones de acción (pista y reiniciar) */
+.action-buttons {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hint-button, .reset-button {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 24px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.hint-button {
+  background: linear-gradient(135deg, #f39c12, #f1c40f);
+  color: white;
+}
+
+.hint-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e67e22, #f39c12);
+  transform: scale(1.1);
+}
+
+.hint-button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.hint-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #e74c3c;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.reset-button {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+}
+
+.reset-button:hover {
+  background: linear-gradient(135deg, #2980b9, #1f5f99);
+  transform: scale(1.1);
+}
+
+/* Estilos para el panel de palabras (MOVIDO A LA IZQUIERDA) */
 .target-words {
-  background-color: #fff;
-  padding: 15px;
+  background-color: #fffefe;
+  padding: 35px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  order: -1; /* Esto lo pone antes del tablero en desktop */
 }
 
 /* En escritorio, el ancho es más estrecho */
@@ -136,11 +225,12 @@ button:active {
 .mobile-layout .target-words {
   width: 100%;
   max-width: 500px;
+  order: 1; /* En móvil va después del tablero */
 }
 
 .words-container {
   display: flex;
-  flex-direction: column; /* Palabras una debajo de otra */
+  flex-direction: column;
   gap: 10px;
 }
 
@@ -150,8 +240,25 @@ button:active {
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   width: 100%;
-  border-left: 5px solid; /* El color se asigna dinámicamente */
+  border-left: 5px solid;
   transition: all 0.3s ease;
+}
+
+/* Animación de pista */
+.word-item.hinted {
+  animation: hintGlow 2s ease-in-out infinite;
+  box-shadow: 0 0 15px rgba(241, 196, 15, 0.6);
+}
+
+@keyframes hintGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(241, 196, 15, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(241, 196, 15, 0.8);
+    transform: scale(1.02);
+  }
 }
 
 .letters {
@@ -184,10 +291,137 @@ button:active {
   100% { transform: scale(1); }
 }
 
+/* Animación cuando se encuentra una palabra */
+.word-found-animation {
+  animation: wordFoundPulse 1s ease-in-out;
+}
+
+@keyframes wordFoundPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(46, 204, 113, 0.7);
+  }
+  25% {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(46, 204, 113, 0.7);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(46, 204, 113, 0.9);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(46, 204, 113, 0.7);
+  }
+}
+
 .progress {
   margin-top: 5px;
   font-size: 12px;
   color: #7f8c8d;
+}
+
+/* Modal de completación */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.completion-modal {
+  background-color: #f4e4a6;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  color: #d35400;
+  font-size: 28px;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #7f8c8d;
+  width: auto;
+  height: auto;
+  padding: 5px;
+}
+
+.modal-content h3 {
+  color: #2c3e50;
+  font-size: 20px;
+  margin: 5px 0;
+}
+
+.completion-time {
+  font-size: 36px;
+  font-weight: bold;
+  color: #27ae60;
+  margin: 20px 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 25px;
+}
+
+.play-again-button, .exit-button {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: auto;
+  height: auto;
+}
+
+.play-again-button {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+}
+
+.play-again-button:hover {
+  background: linear-gradient(135deg, #2980b9, #1f5f99);
+  transform: translateY(-2px);
+}
+
+.exit-button {
+  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+  color: white;
+}
+
+.exit-button:hover {
+  background: linear-gradient(135deg, #7f8c8d, #6c7b7d);
+  transform: translateY(-2px);
 }
 
 /* Instrucciones para teclado */
@@ -210,18 +444,39 @@ button:active {
     font-size: 18px;
   }
 
-  /* En móvil, los botones deben ser aún más grandes para uso táctil */
+  .timer {
+    font-size: 16px;
+    padding: 6px 12px;
+  }
+ 
+  /* En móvil, los botones deben ser grandes para uso táctil */
   .controls {
-    max-width: 200px;
-    gap: 10px;
+    max-width: 250px;
+    gap: 15px;
   }
 
   button {
-    width: 70px; /* Más grande para dedos */
-    height: 70px; /* Más grande para dedos */
-    font-size: 32px; /* Flechas más grandes */
+    width: 75px;
+    height: 75px;
+    font-size: 32px;
   }
 
+  /* Botones de acción más pequeños en móvil */
+  .action-buttons {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 15px;
+  }
+
+  .hint-button, .reset-button {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+ 
   /* En móvil, las palabras se muestran de forma horizontal compacta */
   .mobile-layout .words-container {
     flex-direction: row;
@@ -245,16 +500,16 @@ button:active {
     padding: 8px;
     margin: 2px;
   }
-
+ 
   /* Para pantallas muy pequeñas, botones medianos */
   button {
-    width: 65px;
-    height: 65px;
+    width: 70px;
+    height: 70px;
     font-size: 30px;
   }
 
   .controls {
-    max-width: 180px;
+    max-width: 220px;
   }
 
   .mobile-layout .word-item {
@@ -265,6 +520,18 @@ button:active {
     font-size: 14px;
     min-width: 14px;
   }
+
+  .completion-modal {
+    padding: 20px;
+  }
+
+  .modal-header h2 {
+    font-size: 24px;
+  }
+
+  .completion-time {
+    font-size: 28px;
+  }
 }
 
 /* Estilos para pantallas grandes (Desktop) */
@@ -274,22 +541,22 @@ button:active {
   }
 
   .desktop-layout {
-    gap: 30px;
+    gap: 60px;
   }
 
   .desktop-layout .target-words {
     width: 300px;
   }
-
+ 
   /* En desktop, botones de tamaño estándar pero bien visibles */
   button {
-    width: 55px;
-    height: 55px;
-    font-size: 26px;
+    width: 150px;
+    height: 75px;
+    font-size: 50px;
   }
 
   .controls {
-    max-width: 180px;
+    max-width: 250px;
   }
 }
 
@@ -301,24 +568,4 @@ button:active {
 
 .board {
   transition: all 0.3s ease;
-}
-
-/* Mejora visual para celdas encontradas */
-.cell.found-letter {
-  animation: foundLetterPulse 0.6s ease-in-out;
-}
-
-@keyframes foundLetterPulse {
-  0% { 
-    transform: scale(1); 
-    box-shadow: 0 0 0 rgba(255, 255, 255, 0.7);
-  }
-  50% { 
-    transform: scale(1.1); 
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
-  }
-  100% { 
-    transform: scale(1);
-    box-shadow: 0 0 0 rgba(255, 255, 255, 0.7);
-  }
 }
