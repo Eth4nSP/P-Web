@@ -1,1 +1,17 @@
-<router-outlet></router-outlet>
+<nav class="main-nav">
+  <div class="nav-brand">{{ title }}</div>
+  <ul>
+    <li>
+      <a routerLink="/" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}">Inicio</a>
+    </li>
+    <li>
+      <a routerLink="/game" routerLinkActive="active-link">Jugar</a>
+    </li>
+    <li>
+      <a routerLink="/admin" routerLinkActive="active-link">Panel Admin</a>
+    </li>
+  </ul>
+</nav>
+
+<div class="container mt-3">
+  <router-outlet></router-outlet> </div>

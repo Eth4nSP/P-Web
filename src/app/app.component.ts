@@ -1,15 +1,16 @@
 import { Component } from '@angular/core';
-import { BoardComponent } from './board/board.component';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router'; // RouterLink y RouterLinkActive para la navegación
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
   standalone: true,
-  imports: [CommonModule, BoardComponent, RouterOutlet]
+  // Si BoardComponent se carga a través del router-outlet, no necesitas importarlo aquí.
+  // Solo necesitas RouterOutlet y CommonModule (y RouterLink/RouterLinkActive si los usas en esta plantilla).
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'Juego de Palabras';
+  title = 'Sopa de Letras Dinámica'; // Título actualizado
 }

@@ -1,7 +1,66 @@
-.app-container {
-  width: 100%;
-  height: 100%;
+/* app.component.scss */
+.main-nav {
+  background-color: #343a40; /* Un color oscuro para la barra de navegación */
+  padding: 10px 20px;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.nav-brand {
+  color: #ffffff;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.main-nav ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+}
+
+.main-nav ul li {
+  margin-left: 20px;
+}
+
+.main-nav ul li a {
+  color: #f8f9fa; /* Color claro para los enlaces */
+  text-decoration: none;
+  font-size: 1.1em;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.main-nav ul li a:hover {
+  background-color: #495057; /* Un color ligeramente más claro al pasar el mouse */
+  color: #ffffff;
+}
+
+.active-link {
+  background-color: #007bff; /* Color de resalte para el enlace activo */
+  color: #ffffff !important; /* Asegurar que el texto del enlace activo sea blanco */
+  font-weight: bold;
+}
+
+.container {
+  padding-top: 20px; /* Espacio para que el contenido no quede oculto por la barra de navegación fija */
+}
+
+/* Estilos opcionales para un pie de página fijo en la parte inferior */
+/*
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.container {
+  flex: 1;
+}
+.footer {
+  background-color: #f8f9fa; // Un color claro para el pie de página
+  border-top: 1px solid #e7e7e7;
+}
+*/
