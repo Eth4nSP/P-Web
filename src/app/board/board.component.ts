@@ -34,7 +34,8 @@ interface AnswerSequence {
   styleUrls: ['./board.component.scss'] // Usa styleUrls en plural y como array
 })
 export class BoardComponent implements OnInit, OnDestroy {
-  steps: number = 0;
+  steps: number = 100;
+  maxSteps: number = 100;
   board: string[][] = [];
   carPosition = { row: 0, col: 0 };
 
@@ -54,6 +55,8 @@ export class BoardComponent implements OnInit, OnDestroy {
   showWinMenu: boolean = false;
   finalScore: number = 0;
   gameDifficulty: 'facil' | 'medio' | 'dificil' = 'facil';
+
+  moveSequence: Array<'up' | 'down' | 'left' | 'right'> = [];
 
   constructor(
     private gameService: GameService,
@@ -118,13 +121,30 @@ export class BoardComponent implements OnInit, OnDestroy {
     this.activeAnswerSequences = [];
     this.assignAnswerColors();
     this.initializeBoard();
-    this.resetTimer(); // Mover antes de startTimer
+    this.resetTimer();
     this.isGameOver = false;
     this.showWinMenu = false;
     this.finalScore = 0;
-    this.steps = 0;
+    // Limite de pasos según dificultad
+    switch (this.gameDifficulty) {
+      case 'facil':
+        this.steps = 100;
+        this.maxSteps = 100;
+        break;
+      case 'medio':
+        this.steps = 200;
+        this.maxSteps = 200;
+        break;
+      case 'dificil':
+        this.steps = 300;
+        this.maxSteps = 300;
+        break;
+      default:
+        this.steps = 100;
+        this.maxSteps = 100;
+    }
     this.unlockKeyboard();
-    this.startTimer(); // Iniciar temporizador después de resetear
+    this.startTimer();
   }
 
   resetTimer(): void {
@@ -256,7 +276,7 @@ export class BoardComponent implements OnInit, OnDestroy {
             break;
         }
     } while (this.isPositionPartOfAnyAnswer(r,c));
-
+    r = 0; c = 0; // Asegurarse de que el carro comienza en la esquina superior izquierda
     this.carPosition = { row: r, col: c };
     this.gameService.updateCarPosition(r, c);
   }
@@ -451,7 +471,6 @@ export class BoardComponent implements OnInit, OnDestroy {
       case 'right': if (newPos.col < this.board[0].length - 1) newPos.col++; break;
     }
     if (newPos.row !== this.carPosition.row || newPos.col !== this.carPosition.col) {
-        this.steps++;
         this.gameService.updateCarPosition(newPos.row, newPos.col);
     }
   }
@@ -477,8 +496,36 @@ export class BoardComponent implements OnInit, OnDestroy {
     }
     this.questionService.resetCurrentQuestionsProgress();
     this.questionService.loadGameQuestions(this.gameDifficulty);
+    // El tope de pasos y maxSteps se reinician en initializeGame()
   }
 
   lockKeyboard() { this.keyboardLocked = true; }
   unlockKeyboard() { this.keyboardLocked = false; }
+
+  addMove(direction: 'up' | 'down' | 'left' | 'right') {
+    if (this.moveSequence.length < this.steps) {
+      this.moveSequence.push(direction);
+    }
+  }
+
+  clearMoveSequence() {
+    this.moveSequence = [];
+  }
+
+  async sendMoveSequence() {
+    let movesToExecute = Math.min(this.moveSequence.length, this.steps);
+    for (let i = 0; i < movesToExecute; i++) {
+      this.moveCar(this.moveSequence[i]);
+      await new Promise(res => setTimeout(res, 120));
+      this.steps--;
+      if (this.steps === 0) break;
+    }
+    this.clearMoveSequence();
+    // Si los pasos llegan a 0, bloquear teclado y movimientos
+    if (this.steps === 0) {
+      this.lockKeyboard();
+      this.isGameOver = true;
+      this.cdr.detectChanges();
+    }
+  }
 }
