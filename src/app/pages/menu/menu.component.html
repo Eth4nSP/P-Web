@@ -31,3 +31,17 @@
         </ul>
     </nav>
 </div>
+
+<!-- Cinemática Modal -->
+<div class="cinematic-modal" *ngIf="showTutorial">
+    <div class="cinematic-bg" [ngStyle]="{'background-image': 'url(' + tutorialBg + ')'}"></div>
+    <div class="cinematic-content">
+        <h2>¡Bienvenido/a a Lexaria.dev!</h2>
+        <p>
+            Un joven developer absorbido por un glitch dimensional mientras compilaba su proyecto final de carrera. Despierta en Lexaria.dev, un universo olvidado donde cada línea de código tiene peso real y los Lenguajes de Programación son fuerzas elementales.<br><br>            El sistema operativo que gobierna este mundo está corrupto, y el equilibrio del lenguaje ha sido roto por un bug ancestral. Solo encontrando las Palabras Clave en cada región (mapa), podrás reactivar los Glifos Sintácticos que restauran el
+            orden y desbloquean nuevas funciones del sistema.<br><br> Cada mapa representa un entorno de desarrollo místico (como bosques con estructuras de datos, ruinas de lenguajes obsoletos o servidores abandonados).<br>
+            <b>Tu misión:</b> debuggear el mundo y restaurar el código fuente de la realidad.
+        </p>
+        <button (click)="closeCinematicAndShowDifficulty()">Continuar</button>
+    </div>
+</div>
