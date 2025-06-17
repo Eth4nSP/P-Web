@@ -1,0 +1,26 @@
+<div class="puntaje-bg">
+</div>
+<div class="puntaje-container">
+    <h2>Tabla de Puntajes</h2>
+    <input type="text" placeholder="Buscar por nombre de usuario..." [(ngModel)]="search" (input)="onSearch()" class="search-bar" />
+    <div class="score-table-wrapper">
+        <table class="score-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Usuario</th>
+                    <th>Puntaje</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let score of filteredScores">
+                    <td>{{ score.posicion }}</td>
+                    <td>{{ score.user_name }}</td>
+                    <td>{{ score.score }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div *ngIf="loading" class="loading">Cargando...</div>
+        <div *ngIf="!loading && filteredScores.length === 0" class="no-results">No se encontraron resultados.</div>
+    </div>
+</div>
