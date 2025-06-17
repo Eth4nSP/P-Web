@@ -44,7 +44,7 @@ export class BoardComponent implements OnInit, OnDestroy {
   activeAnswerSequences: AnswerSequence[] = [];
 
   answerColors: { [key: string]: string } = {};
-
+  private isGameInitialized: boolean = false;
   private subscriptions: Subscription = new Subscription();
 
   isMobileDevice: boolean = false;
@@ -65,18 +65,27 @@ export class BoardComponent implements OnInit, OnDestroy {
   ) {}
 
   @HostListener('window:keydown', ['$event'])
-  handleKeyDown(event: KeyboardEvent) {
+    handleKeyDown(event: KeyboardEvent) {
     if (this.keyboardLocked || this.isGameOver) {
-      event.preventDefault();
-      return;
+        event.preventDefault();
+        return;
     }
+    // Cambiamos this.moveCar por this.addMove
     switch (event.key) {
-      case 'ArrowUp': this.moveCar('up'); break;
-      case 'ArrowDown': this.moveCar('down'); break;
-      case 'ArrowLeft': this.moveCar('left'); break;
-      case 'ArrowRight': this.moveCar('right'); break;
+        case 'ArrowUp':
+            this.addMove('up');
+            break;
+        case 'ArrowDown':
+            this.addMove('down');
+            break;
+        case 'ArrowLeft':
+            this.addMove('left');
+            break;
+        case 'ArrowRight':
+            this.addMove('right');
+            break;
     }
-  }
+}
 
   @HostListener('window:resize', ['$event'])
   onResize() {
@@ -94,16 +103,19 @@ export class BoardComponent implements OnInit, OnDestroy {
 
     this.questionService.loadGameQuestions(this.gameDifficulty);
 
-    const questionsSub = this.questionService.getCurrentQuestions().subscribe((questions: Question[]) => { // Tipo añadido
-      this.currentQuestions = questions;
-      if (questions.length > 0) {
+    const questionsSub = this.questionService.getCurrentQuestions().subscribe((questions: Question[]) => {
+    this.currentQuestions = questions;
+    // Solo inicializa el juego si hay preguntas Y el juego no ha sido inicializado antes.
+    if (questions.length > 0 && !this.isGameInitialized) {
         this.initializeGame();
-      } else {
+        this.isGameInitialized = true; // Marcar como inicializado
+    } else if (questions.length === 0) {
         console.warn(`No hay preguntas para la dificultad: ${this.gameDifficulty}`);
         this.board = []; // Limpiar el tablero si no hay preguntas
-      }
-      this.cdr.detectChanges();
-    });
+        this.isGameInitialized = false; // Resetear si no hay preguntas
+    }
+    this.cdr.detectChanges();
+});
     this.subscriptions.add(questionsSub);
 
     // Solo suscribe a carPosition si GameService se usa activamente para la lógica del juego
@@ -179,8 +191,8 @@ export class BoardComponent implements OnInit, OnDestroy {
     }
 
     const difficulty = this.gameDifficulty;
-    const rows = difficulty === 'facil' ? 10 : difficulty === 'medio' ? 15 : 20;
-    const cols = difficulty === 'facil' ? 10 : difficulty === 'medio' ? 15 : 20;
+    const rows = difficulty === 'facil' ? 10 : difficulty === 'medio' ? 14 : 16;
+    const cols = difficulty === 'facil' ? 10 : difficulty === 'medio' ? 14 : 16;
 
     this.board = Array(rows).fill(null).map(() => Array(cols).fill(''));
     for (let i = 0; i < rows; i++) {
@@ -494,10 +506,9 @@ export class BoardComponent implements OnInit, OnDestroy {
         clearInterval(this.timerInterval);
         this.timerInterval = null;
     }
+    this.isGameInitialized = false; // <- AÑADIR ESTA LÍNEA
     this.questionService.resetCurrentQuestionsProgress();
-    this.questionService.loadGameQuestions(this.gameDifficulty);
-    // El tope de pasos y maxSteps se reinician en initializeGame()
-  }
+    this.questionService.loadGameQuestions(this.gameDifficulty);}
 
   lockKeyboard() { this.keyboardLocked = true; }
   unlockKeyboard() { this.keyboardLocked = false; }
