@@ -16,13 +16,16 @@ export class MenuComponent implements OnInit {
   showTutorial = false;
   tutorialBg = '';
   puzzles$!: Observable<Puzzle[]>;
-  
-  // Nuevas propiedades para manejar diferentes tipos de puzzles
+
+  // Propiedades para manejar diferentes tipos de puzzles
   defaultPuzzles: Puzzle[] = [];
   customPuzzles: Puzzle[] = [];
   showDefaultPuzzles = true;
   showCustomPuzzles = false;
-
+  
+  // Nueva propiedad para mostrar niveles de dificultad del sistema
+  showDifficultySelection = false;
+  
   tutorialImages = [
     'assets/arena_infinita_donde_variables_sin_referencia_desaparecen.jpeg',
     'assets/coche_rpg_manejando_tiene_que_ser_como.jpeg',
@@ -30,6 +33,13 @@ export class MenuComponent implements OnInit {
     'assets/mundo_antiguo_de_lexaria_un_reino_olvidado.jpeg',
     'assets/ruinas_flotantes_con_scripts_en_desuso_y.jpeg',
     'assets/compilando_proyecto_final_de_programacion_in_the.jpeg',
+  ];
+
+  // Niveles de dificultad del sistema
+  systemDifficulties = [
+    { id: 'facil', name: 'Fácil', icon: '🟢', description: 'Perfecto para empezar' },
+    { id: 'medio', name: 'Medio', icon: '🟡', description: 'Un desafío moderado' },
+    { id: 'dificil', name: 'Difícil', icon: '🔴', description: 'Para expertos' }
   ];
 
   constructor(
@@ -53,17 +63,35 @@ export class MenuComponent implements OnInit {
     this.tutorialBg = this.tutorialImages[idx];
     this.showTutorial = true;
     this.showPuzzleMenu = false;
-
+    
     // Si se seleccionó un puzzle, guardamos su ID para usarlo después
     if (puzzleId) {
       this.questionService.loadGameConfig(puzzleId);
     }
   }
 
-  selectPuzzle(puzzleId: string) {
-    // El servicio se encarga de guardar la configuración
+  // Método corregido para seleccionar puzzle personalizado
+  selectCustomPuzzle(puzzleId: string) {
+    // Cargar la configuración del puzzle
+    this.questionService.loadGameConfig(puzzleId);
+    // Cerrar el menú
+    this.showPuzzleMenu = false;
+    // Navegar directamente al juego
+    this.router.navigate(['/board']);
+  }
+
+  // Método para seleccionar puzzle predefinido (con tutorial)
+  selectDefaultPuzzle(puzzleId: string) {
     this.questionService.loadGameConfig(puzzleId);
     this.openTutorial(puzzleId);
+  }
+
+  // Método para seleccionar dificultad del sistema
+  selectSystemDifficulty(difficulty: string) {
+    // Aquí puedes crear un puzzle del sistema basado en la dificultad
+    // O navegar a una configuración específica
+    this.questionService.loadSystemGameConfig(difficulty);
+    this.openTutorial();
   }
 
   closeCinematicAndShowDifficulty() {
@@ -77,9 +105,9 @@ export class MenuComponent implements OnInit {
 
   onPlay() {
     this.showPuzzleMenu = true;
-    // Por defecto mostrar niveles del sistema
     this.showDefaultPuzzles = true;
     this.showCustomPuzzles = false;
+    this.showDifficultySelection = false;
   }
 
   onScore() {
@@ -93,17 +121,26 @@ export class MenuComponent implements OnInit {
   // Método para cerrar el menú de puzzles
   closePuzzleMenu() {
     this.showPuzzleMenu = false;
+    this.showDifficultySelection = false;
   }
 
-  // Métodos para cambiar entre vistas de puzzles
+  // Métodos corregidos para cambiar entre vistas
   showSystemLevels() {
+    this.showDefaultPuzzles = false;
+    this.showCustomPuzzles = false;
+    this.showDifficultySelection = true;
+  }
+
+  showSystemPuzzles() {
     this.showDefaultPuzzles = true;
     this.showCustomPuzzles = false;
+    this.showDifficultySelection = false;
   }
 
   showCustomCreatedPuzzles() {
     this.showDefaultPuzzles = false;
     this.showCustomPuzzles = true;
+    this.showDifficultySelection = false;
   }
 
   // Método para ir al admin para crear puzzle personalizado

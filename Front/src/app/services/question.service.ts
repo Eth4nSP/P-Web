@@ -35,7 +35,7 @@ export class QuestionService {
   // El BehaviorSubject ahora manejará un array de Puzzles
   private puzzlesSubject = new BehaviorSubject<Puzzle[]>([]);
   private currentQuestionsSubject = new BehaviorSubject<Question[]>([]);
-  
+ 
   // Para compatibilidad con el sistema anterior
   private questionsSubject = new BehaviorSubject<QuestionsData>({ facil: [], medio: [], dificil: [] });
 
@@ -100,25 +100,25 @@ export class QuestionService {
     switch (difficulty) {
       case 'facil':
         if (rows < 5 || cols < 5 || rows > 8 || cols > 8) {
-          return { 
-            isValid: false, 
-            error: 'Para dificultad Fácil, el tamaño debe estar entre 5x5 y 8x8' 
+          return {
+            isValid: false,
+            error: 'Para dificultad Fácil, el tamaño debe estar entre 5x5 y 8x8'
           };
         }
         break;
       case 'medio':
         if (rows < 9 || cols < 9 || rows > 11 || cols > 11) {
-          return { 
-            isValid: false, 
-            error: 'Para dificultad Medio, el tamaño debe estar entre 9x9 y 11x11' 
+          return {
+            isValid: false,
+            error: 'Para dificultad Medio, el tamaño debe estar entre 9x9 y 11x11'
           };
         }
         break;
       case 'dificil':
         if (rows < 12 || cols < 12 || rows > 15 || cols > 15) {
-          return { 
-            isValid: false, 
-            error: 'Para dificultad Difícil, el tamaño debe estar entre 12x12 y 15x15' 
+          return {
+            isValid: false,
+            error: 'Para dificultad Difícil, el tamaño debe estar entre 12x12 y 15x15'
           };
         }
         break;
@@ -156,7 +156,7 @@ export class QuestionService {
   editPuzzle(id: string, name: string, difficulty: 'facil' | 'medio' | 'dificil', rows: number, cols: number): { success: boolean; error?: string } {
     const puzzles = this.puzzlesSubject.value;
     const puzzleIndex = puzzles.findIndex(p => p.id === id);
-    
+   
     if (puzzleIndex === -1) {
       return { success: false, error: 'Puzzle no encontrado' };
     }
@@ -189,6 +189,7 @@ export class QuestionService {
     if (puzzleIndex === -1) return;
 
     const puzzle = puzzles[puzzleIndex];
+
     const newQuestion: Question = {
       id: this.generateId(),
       question: question.trim(),
@@ -224,6 +225,7 @@ export class QuestionService {
         puzzles[puzzleIndex].questions[questionIndex].question = question.trim();
         puzzles[puzzleIndex].questions[questionIndex].answer = answer.trim().toUpperCase();
         puzzles[puzzleIndex].questions[questionIndex].foundLetters = Array(answer.trim().length).fill(false);
+
         this.puzzlesSubject.next(puzzles);
         this.savePuzzlesToStorage();
       }
@@ -336,6 +338,7 @@ export class QuestionService {
 
   loadGameConfig(puzzleId: string): void {
     const puzzle = this.getPuzzleById(puzzleId);
+
     if (!puzzle) {
       this.currentQuestionsSubject.next([]);
       localStorage.removeItem('gameConfig');
@@ -359,6 +362,80 @@ export class QuestionService {
     this.currentQuestionsSubject.next(gameConfig.questions);
   }
 
+  // NUEVO MÉTODO: Cargar configuración del juego según dificultad del sistema
+  loadSystemGameConfig(difficulty: string): void {
+    const difficultyTyped = difficulty as 'facil' | 'medio' | 'dificil';
+    
+    // Definir configuraciones por dificultad
+    const systemConfigs = {
+      facil: {
+        rows: 8,
+        cols: 8,
+        questions: [
+          { question: 'Lenguaje de marcado para webs', answer: 'HTML' },
+          { question: 'Da estilos a la web', answer: 'CSS' },
+          { question: 'Lenguaje de programación para web', answer: 'JAVASCRIPT' },
+          { question: 'Sistema de control de versiones', answer: 'GIT' },
+          { question: 'Base de datos relacional', answer: 'SQL' }
+        ]
+      },
+      medio: {
+        rows: 10,
+        cols: 10,
+        questions: [
+          { question: 'Patrón de diseño para crear objetos', answer: 'FACTORY' },
+          { question: 'Framework de JavaScript', answer: 'ANGULAR' },
+          { question: 'Librería para interfaces', answer: 'REACT' },
+          { question: 'Plataforma de desarrollo', answer: 'NODEJS' },
+          { question: 'Protocolo de transferencia', answer: 'HTTP' },
+          { question: 'Formato de intercambio de datos', answer: 'JSON' }
+        ]
+      },
+      dificil: {
+        rows: 12,
+        cols: 12,
+        questions: [
+          { question: 'Patrón de arquitectura de software', answer: 'MICROSERVICIOS' },
+          { question: 'Metodología de desarrollo ágil', answer: 'SCRUM' },
+          { question: 'Principio de responsabilidad única', answer: 'SOLID' },
+          { question: 'Patrón de diseño observador', answer: 'OBSERVER' },
+          { question: 'Contenedor de aplicaciones', answer: 'DOCKER' },
+          { question: 'Orquestador de contenedores', answer: 'KUBERNETES' },
+          { question: 'Integración continua', answer: 'CICD' }
+        ]
+      }
+    };
+
+    const config = systemConfigs[difficultyTyped];
+    
+    if (!config) {
+      console.error('Dificultad no válida:', difficulty);
+      return;
+    }
+
+    // Crear preguntas con la estructura correcta
+    const questions: Question[] = config.questions.map((q, index) => ({
+      id: `system-${difficulty}-${index}`,
+      question: q.question,
+      answer: q.answer.toUpperCase(),
+      difficulty: difficultyTyped,
+      isFound: false,
+      foundLetters: Array(q.answer.length).fill(false)
+    }));
+
+    const gameConfig = {
+      puzzleId: `system-${difficulty}`,
+      puzzleName: `Nivel ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} del Sistema`,
+      rows: config.rows,
+      cols: config.cols,
+      difficulty: difficultyTyped,
+      questions: questions
+    };
+
+    localStorage.setItem('gameConfig', JSON.stringify(gameConfig));
+    this.currentQuestionsSubject.next(questions);
+  }
+
   getCurrentGameConfig(): any {
     const saved = localStorage.getItem('gameConfig');
     return saved ? JSON.parse(saved) : null;
@@ -375,7 +452,7 @@ export class QuestionService {
     if (questionIndex !== -1) {
       currentQuestions[questionIndex].foundLetters[letterIndex] = true;
       const allLettersFound = currentQuestions[questionIndex].foundLetters.every(found => found);
-
+      
       if (allLettersFound) {
         currentQuestions[questionIndex].isFound = true;
       }
