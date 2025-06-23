@@ -17,7 +17,7 @@
         <h1>Juego "Sopa de Letras"</h1>
         <ul>
             <li style="position: relative;">
-                <button (click)="showPuzzleMenu = !showPuzzleMenu">Jugar</button>
+                <button (click)="onPlay()">Jugar</button>
                
                 <!-- Menú de puzzles mejorado -->
                 <div class="difficulty-menu" *ngIf="showPuzzleMenu">
@@ -31,12 +31,6 @@
                                 [class.active]="showDifficultySelection"
                                 class="type-btn">
                                 🎮 Niveles del Sistema
-                            </button>
-                            <button
-                                (click)="showSystemPuzzles()"
-                                [class.active]="showDefaultPuzzles"
-                                class="type-btn">
-                                📚 Puzzles Predefinidos
                             </button>
                             <button
                                 (click)="showCustomCreatedPuzzles()"
@@ -59,30 +53,6 @@
                                     <span class="puzzle-description">{{ difficulty.description }}</span>
                                 </div>
                             </button>
-                        </div>
-
-                        <!-- Puzzles Predefinidos -->
-                        <div *ngIf="showDefaultPuzzles" class="puzzle-section">
-                            <h3>📚 Puzzles Predefinidos</h3>
-                            <ng-container *ngIf="defaultPuzzles.length > 0; else noDefaultPuzzles">
-                                <button
-                                    *ngFor="let puzzle of defaultPuzzles"
-                                    (click)="selectDefaultPuzzle(puzzle.id)"
-                                    class="puzzle-option default-puzzle">
-                                    <div class="puzzle-info">
-                                        <span class="puzzle-name">{{ puzzle.name }}</span>
-                                        <span class="puzzle-difficulty">
-                                            {{ getDifficultyIcon(puzzle.difficulty) }}
-                                            {{ getDifficultyLabel(puzzle.difficulty) }}
-                                        </span>
-                                        <span class="puzzle-size">{{ getPuzzleSize(puzzle) }}</span>
-                                        <span class="puzzle-questions">{{ getQuestionCount(puzzle) }} preguntas</span>
-                                    </div>
-                                </button>
-                            </ng-container>
-                            <ng-template #noDefaultPuzzles>
-                                <p>No hay puzzles predefinidos disponibles.</p>
-                            </ng-template>
                         </div>
 
                         <!-- Puzzles Personalizados -->

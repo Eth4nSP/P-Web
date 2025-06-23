@@ -20,12 +20,12 @@ export class MenuComponent implements OnInit {
   // Propiedades para manejar diferentes tipos de puzzles
   defaultPuzzles: Puzzle[] = [];
   customPuzzles: Puzzle[] = [];
-  showDefaultPuzzles = true;
+  showDefaultPuzzles = false;
   showCustomPuzzles = false;
-  
-  // Nueva propiedad para mostrar niveles de dificultad del sistema
-  showDifficultySelection = false;
-  
+
+  // Propiedad para mostrar niveles de dificultad del sistema
+  showDifficultySelection = true; // Cambiado a true por defecto
+
   tutorialImages = [
     'assets/arena_infinita_donde_variables_sin_referencia_desaparecen.jpeg',
     'assets/coche_rpg_manejando_tiene_que_ser_como.jpeg',
@@ -72,31 +72,36 @@ export class MenuComponent implements OnInit {
 
   // Método corregido para seleccionar puzzle personalizado
   selectCustomPuzzle(puzzleId: string) {
+    console.log('Seleccionando puzzle personalizado:', puzzleId);
     // Cargar la configuración del puzzle
     this.questionService.loadGameConfig(puzzleId);
     // Cerrar el menú
     this.showPuzzleMenu = false;
-    // Navegar directamente al juego
-    this.router.navigate(['/board']);
+    // Mostrar tutorial y luego navegar
+    this.openTutorial(puzzleId);
   }
 
-  // Método para seleccionar puzzle predefinido (con tutorial)
+  // Método para seleccionar puzzle predefinido (AGREGADO)
   selectDefaultPuzzle(puzzleId: string) {
+    console.log('Seleccionando puzzle predefinido:', puzzleId);
     this.questionService.loadGameConfig(puzzleId);
     this.openTutorial(puzzleId);
   }
 
-  // Método para seleccionar dificultad del sistema
+  // Método para seleccionar dificultad del sistema (CORREGIDO)
   selectSystemDifficulty(difficulty: string) {
-    // Aquí puedes crear un puzzle del sistema basado en la dificultad
-    // O navegar a una configuración específica
+    console.log('Seleccionando dificultad del sistema:', difficulty);
+    // Cargar configuración del sistema basada en la dificultad
     this.questionService.loadSystemGameConfig(difficulty);
+    // Cerrar el menú
+    this.showPuzzleMenu = false;
+    // Mostrar tutorial
     this.openTutorial();
   }
 
   closeCinematicAndShowDifficulty() {
     this.showTutorial = false;
-    this.router.navigate(['/board']);
+    this.router.navigate(['/game']);
   }
 
   scoreboard() {
@@ -105,9 +110,9 @@ export class MenuComponent implements OnInit {
 
   onPlay() {
     this.showPuzzleMenu = true;
-    this.showDefaultPuzzles = true;
     this.showCustomPuzzles = false;
-    this.showDifficultySelection = false;
+    this.showDefaultPuzzles = false;
+    this.showDifficultySelection = true; // Mostrar dificultades por defecto
   }
 
   onScore() {
@@ -126,11 +131,12 @@ export class MenuComponent implements OnInit {
 
   // Métodos corregidos para cambiar entre vistas
   showSystemLevels() {
-    this.showDefaultPuzzles = false;
     this.showCustomPuzzles = false;
+    this.showDefaultPuzzles = false;
     this.showDifficultySelection = true;
   }
 
+  // Método AGREGADO que faltaba
   showSystemPuzzles() {
     this.showDefaultPuzzles = true;
     this.showCustomPuzzles = false;
@@ -138,8 +144,8 @@ export class MenuComponent implements OnInit {
   }
 
   showCustomCreatedPuzzles() {
-    this.showDefaultPuzzles = false;
     this.showCustomPuzzles = true;
+    this.showDefaultPuzzles = false;
     this.showDifficultySelection = false;
   }
 
