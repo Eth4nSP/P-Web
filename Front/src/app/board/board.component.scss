@@ -1,8 +1,6 @@
 /* board.component.scss - Adaptado de tu SCSS original con algunos cambios */
 
-
 /* ... (tus estilos existentes de .game-container, h2, .game-layout, .board, .row, .controls, button, etc. van aquí) ... */
-
 
 /* Asegúrate de copiar tus estilos existentes de ia 2.docx aquí para mantener la apariencia */
 
@@ -171,9 +169,7 @@
     text-decoration: underline;
 }
 
-
 /* COPIA AQUÍ TUS ESTILOS EXISTENTES DE 'ia 2.docx' para .game-container, h2, .timer, .game-over-modal, etc. */
-
 
 /* Por ejemplo: */
 
@@ -414,7 +410,6 @@ h2 {
     }
 }
 
-
 /* NUEVOS ESTILOS PARA LA CADENA DE MOVIMIENTOS */
 
 .controls-move-chain {
@@ -423,6 +418,26 @@ h2 {
     align-items: center;
     margin: 18px 0 10px 0;
     gap: 10px;
+}
+
+.move-buttons .btn-mark, .move-buttons .btn-finish {
+    grid-column: span 1;
+    background: linear-gradient(90deg, #1abc9c, #16a085);
+    font-size: 1em;
+    padding: 0 5px;
+    width: auto;
+    height: 54px;
+}
+
+.move-buttons .btn-finish {
+    background: linear-gradient(90deg, #e74c3c, #c0392b);
+}
+
+.move-buttons button:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.6;
 }
 
 .move-buttons {

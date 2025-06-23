@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
+// Estructuras de datos actualizadas
 export interface Question {
   id: string;
   question: string;
@@ -10,40 +11,232 @@ export interface Question {
   foundLetters: boolean[];
 }
 
-export interface QuestionsData {
+export interface Puzzle {
+  id: string;
+  name: string;
+  difficulty: 'facil' | 'medio' | 'dificil';
+  rows: number;
+  cols: number;
+  questions: Question[];
+  isCustom?: boolean; // Para diferenciar puzzles personalizados
+}
+
+// Estructura para compatibilidad con el sistema anterior
+type QuestionsData = {
   facil: Question[];
   medio: Question[];
   dificil: Question[];
-}
+};
 
 @Injectable({
-  providedIn: 'root' 
+  providedIn: 'root'
 })
 export class QuestionService {
-  private questionsSubject = new BehaviorSubject<QuestionsData>({
-    facil: [],
-    medio: [],
-    dificil: []
-  });
-
+  // El BehaviorSubject ahora manejará un array de Puzzles
+  private puzzlesSubject = new BehaviorSubject<Puzzle[]>([]);
   private currentQuestionsSubject = new BehaviorSubject<Question[]>([]);
+  
+  // Para compatibilidad con el sistema anterior
+  private questionsSubject = new BehaviorSubject<QuestionsData>({ facil: [], medio: [], dificil: [] });
 
   constructor() {
-    this.loadQuestionsFromStorage();
+    this.loadPuzzlesFromStorage();
+    this.loadTraditionalQuestionsFromStorage();
   }
 
-  // Observables para suscribirse a cambios
+  // ---- MÉTODOS PARA MANEJAR PUZZLES ----
+
+  getPuzzles(): Observable<Puzzle[]> {
+    return this.puzzlesSubject.asObservable();
+  }
+
+  // Obtener puzzles predefinidos (niveles del sistema)
+  getDefaultPuzzles(): Puzzle[] {
+    return this.puzzlesSubject.value.filter(p => !p.isCustom);
+  }
+
+  // Obtener puzzles personalizados del usuario
+  getCustomPuzzles(): Puzzle[] {
+    return this.puzzlesSubject.value.filter(p => p.isCustom);
+  }
+
+  getPuzzleById(id: string): Puzzle | undefined {
+    return this.puzzlesSubject.value.find(p => p.id === id);
+  }
+
+  // Método para crear puzzles personalizados
+  addCustomPuzzle(name: string, difficulty: 'facil' | 'medio' | 'dificil', rows: number, cols: number): { success: boolean; error?: string; id?: string } {
+    // Validaciones de tamaño según dificultad
+    const validationResult = this.validatePuzzleSize(difficulty, rows, cols);
+    if (!validationResult.isValid) {
+      return { success: false, error: validationResult.error };
+    }
+
+    // Validar que el nombre no esté vacío
+    if (!name.trim()) {
+      return { success: false, error: 'El nombre del puzzle es requerido' };
+    }
+
+    const newPuzzle: Puzzle = {
+      id: this.generateId(),
+      name: name.trim(),
+      difficulty,
+      rows,
+      cols,
+      questions: [],
+      isCustom: true
+    };
+
+    const puzzles = this.puzzlesSubject.value;
+    puzzles.push(newPuzzle);
+    this.puzzlesSubject.next(puzzles);
+    this.savePuzzlesToStorage();
+
+    return { success: true, id: newPuzzle.id };
+  }
+
+  // Método para validar tamaños de puzzle según dificultad
+  validatePuzzleSize(difficulty: 'facil' | 'medio' | 'dificil', rows: number, cols: number): { isValid: boolean; error?: string } {
+    switch (difficulty) {
+      case 'facil':
+        if (rows < 5 || cols < 5 || rows > 8 || cols > 8) {
+          return { 
+            isValid: false, 
+            error: 'Para dificultad Fácil, el tamaño debe estar entre 5x5 y 8x8' 
+          };
+        }
+        break;
+      case 'medio':
+        if (rows < 9 || cols < 9 || rows > 11 || cols > 11) {
+          return { 
+            isValid: false, 
+            error: 'Para dificultad Medio, el tamaño debe estar entre 9x9 y 11x11' 
+          };
+        }
+        break;
+      case 'dificil':
+        if (rows < 12 || cols < 12 || rows > 15 || cols > 15) {
+          return { 
+            isValid: false, 
+            error: 'Para dificultad Difícil, el tamaño debe estar entre 12x12 y 15x15' 
+          };
+        }
+        break;
+    }
+    return { isValid: true };
+  }
+
+  // Método para agregar puzzles del sistema (niveles predefinidos)
+  addSystemPuzzle(name: string, difficulty: 'facil' | 'medio' | 'dificil', rows: number, cols: number): string {
+    const newPuzzle: Puzzle = {
+      id: this.generateId(),
+      name,
+      difficulty,
+      rows,
+      cols,
+      questions: [],
+      isCustom: false
+    };
+
+    const puzzles = this.puzzlesSubject.value;
+    puzzles.push(newPuzzle);
+    this.puzzlesSubject.next(puzzles);
+    this.savePuzzlesToStorage();
+
+    return newPuzzle.id;
+  }
+
+  deletePuzzle(id: string): void {
+    let puzzles = this.puzzlesSubject.value;
+    puzzles = puzzles.filter(p => p.id !== id);
+    this.puzzlesSubject.next(puzzles);
+    this.savePuzzlesToStorage();
+  }
+
+  editPuzzle(id: string, name: string, difficulty: 'facil' | 'medio' | 'dificil', rows: number, cols: number): { success: boolean; error?: string } {
+    const puzzles = this.puzzlesSubject.value;
+    const puzzleIndex = puzzles.findIndex(p => p.id === id);
+    
+    if (puzzleIndex === -1) {
+      return { success: false, error: 'Puzzle no encontrado' };
+    }
+
+    // Si es un puzzle personalizado, validar tamaño
+    if (puzzles[puzzleIndex].isCustom) {
+      const validationResult = this.validatePuzzleSize(difficulty, rows, cols);
+      if (!validationResult.isValid) {
+        return { success: false, error: validationResult.error };
+      }
+    }
+
+    puzzles[puzzleIndex].name = name;
+    puzzles[puzzleIndex].difficulty = difficulty;
+    puzzles[puzzleIndex].rows = rows;
+    puzzles[puzzleIndex].cols = cols;
+
+    this.puzzlesSubject.next(puzzles);
+    this.savePuzzlesToStorage();
+
+    return { success: true };
+  }
+
+  // ---- MÉTODOS PARA MANEJAR PREGUNTAS DENTRO DE UN PUZZLE ----
+
+  addQuestionToPuzzle(puzzleId: string, question: string, answer: string): void {
+    const puzzles = this.puzzlesSubject.value;
+    const puzzleIndex = puzzles.findIndex(p => p.id === puzzleId);
+
+    if (puzzleIndex === -1) return;
+
+    const puzzle = puzzles[puzzleIndex];
+    const newQuestion: Question = {
+      id: this.generateId(),
+      question: question.trim(),
+      answer: answer.trim().toUpperCase(),
+      difficulty: puzzle.difficulty,
+      isFound: false,
+      foundLetters: Array(answer.trim().length).fill(false)
+    };
+
+    puzzles[puzzleIndex].questions.push(newQuestion);
+    this.puzzlesSubject.next(puzzles);
+    this.savePuzzlesToStorage();
+  }
+
+  deleteQuestionFromPuzzle(puzzleId: string, questionId: string): void {
+    const puzzles = this.puzzlesSubject.value;
+    const puzzleIndex = puzzles.findIndex(p => p.id === puzzleId);
+
+    if (puzzleIndex !== -1) {
+      puzzles[puzzleIndex].questions = puzzles[puzzleIndex].questions.filter(q => q.id !== questionId);
+      this.puzzlesSubject.next(puzzles);
+      this.savePuzzlesToStorage();
+    }
+  }
+
+  editQuestionInPuzzle(puzzleId: string, questionId: string, question: string, answer: string): void {
+    const puzzles = this.puzzlesSubject.value;
+    const puzzleIndex = puzzles.findIndex(p => p.id === puzzleId);
+
+    if (puzzleIndex !== -1) {
+      const questionIndex = puzzles[puzzleIndex].questions.findIndex(q => q.id === questionId);
+      if (questionIndex !== -1) {
+        puzzles[puzzleIndex].questions[questionIndex].question = question.trim();
+        puzzles[puzzleIndex].questions[questionIndex].answer = answer.trim().toUpperCase();
+        puzzles[puzzleIndex].questions[questionIndex].foundLetters = Array(answer.trim().length).fill(false);
+        this.puzzlesSubject.next(puzzles);
+        this.savePuzzlesToStorage();
+      }
+    }
+  }
+
+  // ---- MÉTODOS PARA COMPATIBILIDAD CON EL SISTEMA ANTERIOR DE PREGUNTAS ----
+
   getQuestions(): Observable<QuestionsData> {
     return this.questionsSubject.asObservable();
   }
 
-  getCurrentQuestions(): Observable<Question[]> {
-    return this.currentQuestionsSubject.asObservable();
-  }
-
-  // Agregar nueva pregunta
   addQuestion(question: string, answer: string, difficulty: 'facil' | 'medio' | 'dificil'): void {
-    const currentData = this.questionsSubject.value;
     const newQuestion: Question = {
       id: this.generateId(),
       question: question.trim(),
@@ -53,78 +246,144 @@ export class QuestionService {
       foundLetters: Array(answer.trim().length).fill(false)
     };
 
+    const currentData = this.questionsSubject.value;
     currentData[difficulty].push(newQuestion);
-    this.questionsSubject.next(currentData);
-    this.saveQuestionsToStorage();
+    this.questionsSubject.next({ ...currentData });
+    this.saveTraditionalQuestionsToStorage();
   }
 
-  // Eliminar pregunta
-  deleteQuestion(id: string): void {
+  editQuestion(questionId: string, question: string, answer: string): void {
     const currentData = this.questionsSubject.value;
-    
-    for (const difficulty of ['facil', 'medio', 'dificil'] as const) {
-      currentData[difficulty] = currentData[difficulty].filter(q => q.id !== id);
-    }
-    
-    this.questionsSubject.next(currentData);
-    this.saveQuestionsToStorage();
-  }
+    let found = false;
 
-  // Editar pregunta
-  editQuestion(id: string, question: string, answer: string): void {
-    const currentData = this.questionsSubject.value;
-    
+    // Buscar en todas las dificultades
     for (const difficulty of ['facil', 'medio', 'dificil'] as const) {
-      const questionIndex = currentData[difficulty].findIndex(q => q.id === id);
+      const questionIndex = currentData[difficulty].findIndex(q => q.id === questionId);
       if (questionIndex !== -1) {
         currentData[difficulty][questionIndex].question = question.trim();
         currentData[difficulty][questionIndex].answer = answer.trim().toUpperCase();
         currentData[difficulty][questionIndex].foundLetters = Array(answer.trim().length).fill(false);
+        found = true;
         break;
       }
     }
-    
-    this.questionsSubject.next(currentData);
-    this.saveQuestionsToStorage();
+
+    if (found) {
+      this.questionsSubject.next({ ...currentData });
+      this.saveTraditionalQuestionsToStorage();
+    }
   }
 
-  // Obtener preguntas por dificultad
-  getQuestionsByDifficulty(difficulty: 'facil' | 'medio' | 'dificil'): Question[] {
-    return this.questionsSubject.value[difficulty];
+  deleteQuestion(questionId: string): void {
+    const currentData = this.questionsSubject.value;
+    let found = false;
+
+    // Buscar y eliminar en todas las dificultades
+    for (const difficulty of ['facil', 'medio', 'dificil'] as const) {
+      const questionIndex = currentData[difficulty].findIndex(q => q.id === questionId);
+      if (questionIndex !== -1) {
+        currentData[difficulty].splice(questionIndex, 1);
+        found = true;
+        break;
+      }
+    }
+
+    if (found) {
+      this.questionsSubject.next({ ...currentData });
+      this.saveTraditionalQuestionsToStorage();
+    }
   }
 
-  // Cargar preguntas para el juego actual
-  loadGameQuestions(difficulty: 'facil' | 'medio' | 'dificil'): void {
-    const questions = this.getQuestionsByDifficulty(difficulty);
-    // Resetear estado de preguntas encontradas
-    const resetQuestions = questions.map(q => ({
-      ...q,
-      isFound: false,
-      foundLetters: Array(q.answer.length).fill(false)
-    }));
-    
-    this.currentQuestionsSubject.next(resetQuestions);
+  exportQuestions(): string {
+    const traditionalQuestions = this.questionsSubject.value;
+    const puzzles = this.puzzlesSubject.value;
+
+    return JSON.stringify({
+      traditionalQuestions,
+      puzzles
+    }, null, 2);
   }
 
-  // Marcar letra como encontrada
+  importQuestions(jsonData: string): boolean {
+    try {
+      const data = JSON.parse(jsonData);
+
+      // Importar preguntas tradicionales si existen
+      if (data.traditionalQuestions) {
+        this.questionsSubject.next(data.traditionalQuestions);
+        this.saveTraditionalQuestionsToStorage();
+      }
+
+      // Importar puzzles si existen
+      if (data.puzzles && Array.isArray(data.puzzles)) {
+        this.puzzlesSubject.next(data.puzzles);
+        this.savePuzzlesToStorage();
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error importing questions:', error);
+      return false;
+    }
+  }
+
+  clearAllQuestions(): void {
+    this.questionsSubject.next({ facil: [], medio: [], dificil: [] });
+    this.saveTraditionalQuestionsToStorage();
+  }
+
+  // ---- MÉTODOS PARA EL JUEGO ----
+
+  loadGameConfig(puzzleId: string): void {
+    const puzzle = this.getPuzzleById(puzzleId);
+    if (!puzzle) {
+      this.currentQuestionsSubject.next([]);
+      localStorage.removeItem('gameConfig');
+      return;
+    }
+
+    const gameConfig = {
+      puzzleId: puzzle.id,
+      puzzleName: puzzle.name,
+      rows: puzzle.rows,
+      cols: puzzle.cols,
+      difficulty: puzzle.difficulty,
+      questions: puzzle.questions.map(q => ({
+        ...q,
+        isFound: false,
+        foundLetters: Array(q.answer.length).fill(false)
+      }))
+    };
+
+    localStorage.setItem('gameConfig', JSON.stringify(gameConfig));
+    this.currentQuestionsSubject.next(gameConfig.questions);
+  }
+
+  getCurrentGameConfig(): any {
+    const saved = localStorage.getItem('gameConfig');
+    return saved ? JSON.parse(saved) : null;
+  }
+
+  getCurrentQuestions(): Observable<Question[]> {
+    return this.currentQuestionsSubject.asObservable();
+  }
+
   markLetterFound(questionId: string, letterIndex: number): void {
     const currentQuestions = this.currentQuestionsSubject.value;
     const questionIndex = currentQuestions.findIndex(q => q.id === questionId);
-    
+
     if (questionIndex !== -1) {
       currentQuestions[questionIndex].foundLetters[letterIndex] = true;
-      
-      // Verificar si toda la palabra está encontrada
       const allLettersFound = currentQuestions[questionIndex].foundLetters.every(found => found);
+
       if (allLettersFound) {
         currentQuestions[questionIndex].isFound = true;
       }
-      
+
       this.currentQuestionsSubject.next([...currentQuestions]);
     }
   }
 
-  // Resetear progreso de preguntas actuales
   resetCurrentQuestionsProgress(): void {
     const currentQuestions = this.currentQuestionsSubject.value;
     const resetQuestions = currentQuestions.map(q => ({
@@ -132,137 +391,180 @@ export class QuestionService {
       isFound: false,
       foundLetters: Array(q.answer.length).fill(false)
     }));
-    
+
     this.currentQuestionsSubject.next(resetQuestions);
   }
 
-  // Verificar si todas las preguntas están resueltas
   areAllQuestionsResolved(): boolean {
     const currentQuestions = this.currentQuestionsSubject.value;
     return currentQuestions.length > 0 && currentQuestions.every(q => q.isFound);
   }
 
-  // Obtener progreso de una pregunta
-  getQuestionProgress(questionId: string): number {
+  getQuestionProgress(questionId: string): { found: number; total: number } {
     const currentQuestions = this.currentQuestionsSubject.value;
     const question = currentQuestions.find(q => q.id === questionId);
-    
-    if (!question) return 0;
-    
-    return question.foundLetters.filter(found => found).length;
+
+    if (!question) return { found: 0, total: 0 };
+
+    return {
+      found: question.foundLetters.filter(found => found).length,
+      total: question.foundLetters.length
+    };
   }
 
-  // Obtener respuestas para colocar en el tablero
   getCurrentAnswers(): string[] {
     return this.currentQuestionsSubject.value.map(q => q.answer);
   }
 
-  // Verificar si una letra pertenece a alguna respuesta
-  isLetterInAnswers(letter: string, row: number, col: number): { questionId: string; letterIndex: number } | null {
-    return null;
+  // ---- MÉTODOS PRIVADOS ----
+
+  private savePuzzlesToStorage(): void {
+    localStorage.setItem('wordSearchPuzzles', JSON.stringify(this.puzzlesSubject.value));
   }
 
-  // Guardar en localStorage
-  private saveQuestionsToStorage(): void {
-    const data = this.questionsSubject.value;
-    localStorage.setItem('gameQuestions', JSON.stringify(data));
+  private loadPuzzlesFromStorage(): void {
+    const saved = localStorage.getItem('wordSearchPuzzles');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        this.puzzlesSubject.next(data);
+      } catch (error) {
+        console.error('Error loading puzzles from storage:', error);
+        this.loadDefaultPuzzles();
+      }
+    } else {
+      this.loadDefaultPuzzles();
+    }
   }
 
-  // Cargar desde localStorage
-  private loadQuestionsFromStorage(): void {
-    const saved = localStorage.getItem('gameQuestions');
+  private saveTraditionalQuestionsToStorage(): void {
+    localStorage.setItem('traditionalQuestions', JSON.stringify(this.questionsSubject.value));
+  }
+
+  private loadTraditionalQuestionsFromStorage(): void {
+    const saved = localStorage.getItem('traditionalQuestions');
     if (saved) {
       try {
         const data = JSON.parse(saved);
         this.questionsSubject.next(data);
       } catch (error) {
-        console.error('Error loading questions from storage:', error);
-        this.loadDefaultQuestions();
+        console.error('Error loading traditional questions from storage:', error);
       }
-    } else {
-      this.loadDefaultQuestions();
     }
   }
 
-  // Cargar preguntas por defecto
-  private loadDefaultQuestions(): void {
-    const defaultQuestions: QuestionsData = {
-      facil: [
-        {
-          id: this.generateId(),
-          question: '¿Qué lenguaje de programación es popular para desarrollo web?',
-          answer: 'JAVASCRIPT',
-          difficulty: 'facil',
-          isFound: false,
-          foundLetters: Array(10).fill(false)
-        },
-        {
-          id: this.generateId(),
-          question: '¿Qué significa HTML?',
-          answer: 'HTML',
-          difficulty: 'facil',
-          isFound: false,
-          foundLetters: Array(4).fill(false)
-        }
-      ],
-      medio: [
-        {
-          id: this.generateId(),
-          question: '¿Qué patrón de diseño permite crear objetos sin especificar su clase?',
-          answer: 'FACTORY',
-          difficulty: 'medio',
-          isFound: false,
-          foundLetters: Array(7).fill(false)
-        }
-      ],
-      dificil: [
-        {
-          id: this.generateId(),
-          question: '¿Qué algoritmo de ordenamiento tiene complejidad O(n log n) en el caso promedio?',
-          answer: 'QUICKSORT',
-          difficulty: 'dificil',
-          isFound: false,
-          foundLetters: Array(9).fill(false)
-        }
-      ]
-    };
+  private loadDefaultPuzzles(): void {
+    const defaultPuzzles: Puzzle[] = [
+      {
+        id: 'default-facil',
+        name: 'Nivel Fácil - Introducción a la Web',
+        difficulty: 'facil',
+        rows: 8,
+        cols: 8,
+        isCustom: false,
+        questions: [
+          {
+            id: 'q1',
+            question: 'Lenguaje de marcado para webs',
+            answer: 'HTML',
+            difficulty: 'facil',
+            isFound: false,
+            foundLetters: Array(4).fill(false)
+          },
+          {
+            id: 'q2',
+            question: 'Da estilos a la web',
+            answer: 'CSS',
+            difficulty: 'facil',
+            isFound: false,
+            foundLetters: Array(3).fill(false)
+          },
+          {
+            id: 'q3',
+            question: 'Lenguaje de programación para web',
+            answer: 'JAVASCRIPT',
+            difficulty: 'facil',
+            isFound: false,
+            foundLetters: Array(10).fill(false)
+          }
+        ]
+      },
+      {
+        id: 'default-medio',
+        name: 'Nivel Medio - Programación Avanzada',
+        difficulty: 'medio',
+        rows: 10,
+        cols: 10,
+        isCustom: false,
+        questions: [
+          {
+            id: 'q4',
+            question: 'Patrón de diseño para crear objetos',
+            answer: 'FACTORY',
+            difficulty: 'medio',
+            isFound: false,
+            foundLetters: Array(7).fill(false)
+          },
+          {
+            id: 'q5',
+            question: 'Sistema de control de versiones',
+            answer: 'GIT',
+            difficulty: 'medio',
+            isFound: false,
+            foundLetters: Array(3).fill(false)
+          }
+        ]
+      },
+      {
+        id: 'default-dificil',
+        name: 'Nivel Difícil - Arquitectura de Software',
+        difficulty: 'dificil',
+        rows: 12,
+        cols: 12,
+        isCustom: false,
+        questions: [
+          {
+            id: 'q6',
+            question: 'Patrón de arquitectura de software',
+            answer: 'MICROSERVICIOS',
+            difficulty: 'dificil',
+            isFound: false,
+            foundLetters: Array(13).fill(false)
+          }
+        ]
+      }
+    ];
 
-    this.questionsSubject.next(defaultQuestions);
-    this.saveQuestionsToStorage();
+    this.puzzlesSubject.next(defaultPuzzles);
+    this.savePuzzlesToStorage();
   }
 
-  // Generar ID único
   private generateId(): string {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
   }
 
-  // Limpiar todas las preguntas (útil para testing)
-  clearAllQuestions(): void {
-    this.questionsSubject.next({
-      facil: [],
-      medio: [],
-      dificil: []
-    });
-    this.saveQuestionsToStorage();
+  clearAllPuzzles(): void {
+    // Solo limpiar puzzles personalizados, mantener los del sistema
+    const puzzles = this.puzzlesSubject.value;
+    const systemPuzzles = puzzles.filter(p => !p.isCustom);
+    this.puzzlesSubject.next(systemPuzzles);
+    this.savePuzzlesToStorage();
   }
 
-  // Exportar preguntas (para backup)
-  exportQuestions(): string {
-    return JSON.stringify(this.questionsSubject.value, null, 2);
+  exportPuzzles(): string {
+    return JSON.stringify(this.puzzlesSubject.value, null, 2);
   }
 
-  // Importar preguntas (desde backup)
-  importQuestions(jsonData: string): boolean {
+  importPuzzles(jsonData: string): boolean {
     try {
       const data = JSON.parse(jsonData);
-      // Validar estructura básica
-      if (data.facil && data.medio && data.dificil) {
-        this.questionsSubject.next(data);
-        this.saveQuestionsToStorage();
+      if (Array.isArray(data)) {
+        this.puzzlesSubject.next(data);
+        this.savePuzzlesToStorage();
         return true;
       }
     } catch (error) {
-      console.error('Error importing questions:', error);
+      console.error('Error importing puzzles:', error);
     }
     return false;
   }

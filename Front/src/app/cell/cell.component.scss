@@ -75,4 +75,21 @@
   .car-position::after {
     font-size: 22px;
   }
+
+  .marked-letter {
+    background-color: rgba(243, 156, 18, 0.4); // Naranja semitransparente
+    border-color: #f39c12;
+}
+
+.error-letter {
+    background-color: #e74c3c !important; // Rojo fuerte
+    color: white;
+    animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
 }

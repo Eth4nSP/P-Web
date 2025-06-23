@@ -1,8 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CellComponent } from '../cell/cell.component'; // Asegúrate que la ruta sea correcta y CellComponent sea standalone
-import { GameService } from '../game.service'; // Asumiendo que está en src/app/game.service.ts
-// Corregida la ruta para QuestionService:
+import { CellComponent } from '../cell/cell.component';
+import { GameService } from '../game.service';
 import { QuestionService, Question } from '../services/question.service';
 import { Subscription } from 'rxjs';
 import { RouterLink } from '@angular/router';
@@ -15,23 +14,16 @@ interface FoundPosition {
   color: string;
 }
 
-interface AnswerSequence {
-  answerId: string;
-  answerText: string;
-  positions: { row: number, col: number }[];
-  isComplete: boolean;
-}
-
 @Component({
   selector: 'app-board',
   standalone: true,
   imports: [
     CommonModule,
-    CellComponent, // CellComponent debe ser standalone o parte de un NgModule importado
+    CellComponent,
     RouterLink
   ],
   templateUrl: './board.component.html',
-  styleUrls: ['./board.component.scss'] // Usa styleUrls en plural y como array
+  styleUrls: ['./board.component.scss']
 })
 export class BoardComponent implements OnInit, OnDestroy {
   steps: number = 100;
@@ -41,7 +33,6 @@ export class BoardComponent implements OnInit, OnDestroy {
 
   currentQuestions: Question[] = [];
   foundPositions: FoundPosition[] = [];
-  activeAnswerSequences: AnswerSequence[] = [];
 
   answerColors: { [key: string]: string } = {};
   private isGameInitialized: boolean = false;
@@ -54,38 +45,45 @@ export class BoardComponent implements OnInit, OnDestroy {
   keyboardLocked: boolean = false;
   showWinMenu: boolean = false;
   finalScore: number = 0;
-  gameDifficulty: 'facil' | 'medio' | 'dificil' = 'facil';
+  puzzleName: string = '';
+  isMarkingVisual: boolean = false;
 
-  moveSequence: Array<'up' | 'down' | 'left' | 'right'> = [];
+  // NUEVAS PROPIEDADES PARA EL SISTEMA DE MARCADO
+  moveSequence: Array<'up' | 'down' | 'left' | 'right' | 'mark' | 'finish'> = [];
+  isMarking: boolean = false;
+  markedPath: { row: number; col: number }[] = [];
+  errorPath: { row: number; col: number }[] = [];
+
+  // Configuración del juego
+  gameConfig: any = null;
 
   constructor(
     private gameService: GameService,
-    private questionService: QuestionService, // Asegúrate que QuestionService esté bien importado y proveído (e.g. providedIn: 'root')
+    private questionService: QuestionService,
     private cdr: ChangeDetectorRef
   ) {}
 
   @HostListener('window:keydown', ['$event'])
-    handleKeyDown(event: KeyboardEvent) {
+  handleKeyDown(event: KeyboardEvent) {
     if (this.keyboardLocked || this.isGameOver) {
-        event.preventDefault();
-        return;
+      event.preventDefault();
+      return;
     }
-    // Cambiamos this.moveCar por this.addMove
     switch (event.key) {
-        case 'ArrowUp':
-            this.addMove('up');
-            break;
-        case 'ArrowDown':
-            this.addMove('down');
-            break;
-        case 'ArrowLeft':
-            this.addMove('left');
-            break;
-        case 'ArrowRight':
-            this.addMove('right');
-            break;
+      case 'ArrowUp':
+        this.addMove('up');
+        break;
+      case 'ArrowDown':
+        this.addMove('down');
+        break;
+      case 'ArrowLeft':
+        this.addMove('left');
+        break;
+      case 'ArrowRight':
+        this.addMove('right');
+        break;
     }
-}
+  }
 
   @HostListener('window:resize', ['$event'])
   onResize() {
@@ -98,47 +96,62 @@ export class BoardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.checkDeviceType();
-    const storedDifficulty = localStorage.getItem('dificultad') as 'facil' | 'medio' | 'dificil';
-    this.gameDifficulty = storedDifficulty || 'facil';
 
-    this.questionService.loadGameQuestions(this.gameDifficulty);
-
-    const questionsSub = this.questionService.getCurrentQuestions().subscribe((questions: Question[]) => {
-    this.currentQuestions = questions;
-    // Solo inicializa el juego si hay preguntas Y el juego no ha sido inicializado antes.
-    if (questions.length > 0 && !this.isGameInitialized) {
-        this.initializeGame();
-        this.isGameInitialized = true; // Marcar como inicializado
-    } else if (questions.length === 0) {
-        console.warn(`No hay preguntas para la dificultad: ${this.gameDifficulty}`);
-        this.board = []; // Limpiar el tablero si no hay preguntas
-        this.isGameInitialized = false; // Resetear si no hay preguntas
+    // Obtener el nombre del puzzle desde la configuración del juego
+    const gameConfig = this.questionService.getCurrentGameConfig();
+    if (gameConfig) {
+      this.puzzleName = gameConfig.puzzleName || 'Sopa de Letras';
     }
-    this.cdr.detectChanges();
-});
-    this.subscriptions.add(questionsSub);
+    
+    // Lee toda la configuración del juego desde localStorage
+    const gameConfigString = localStorage.getItem('gameConfig');
+    if (gameConfigString) {
+      this.gameConfig = JSON.parse(gameConfigString);
+      this.currentQuestions = this.gameConfig.questions;
+      
+      if (this.currentQuestions.length > 0 && !this.isGameInitialized) {
+        this.initializeGame(this.gameConfig);
+        this.isGameInitialized = true;
+      }
+    } else {
+      console.warn("No se encontró configuración de juego. Volviendo al menú.");
+      // Opcional: Redirigir al menú si no hay configuración
+    }
 
-    // Solo suscribe a carPosition si GameService se usa activamente para la lógica del juego
+    this.cdr.detectChanges();
+
+    // Suscripción a la posición del carro
     const carPosSub = this.gameService.getCarPosition().subscribe(position => {
       this.carPosition = position;
-      if (this.currentQuestions.length > 0 && this.board.length > 0) { // Solo verificar si el juego está activo
-          this.checkForAnswerSequence();
-      }
     });
     this.subscriptions.add(carPosSub);
   }
 
-  initializeGame(): void {
+  // Método para manejar el estado de marcado visual
+  private updateMarkingVisualState(): void {
+    // Actualizar isMarkingVisual basado en tu lógica de marcado
+    // Por ejemplo, si tienes un array de movimientos que incluye 'mark'
+    this.isMarkingVisual = this.moveSequence.includes('mark') && !this.moveSequence.includes('finish');
+  }
+
+  // initializeGame ahora recibe la configuración completa del puzzle
+  initializeGame(config: any): void {
     this.foundPositions = [];
-    this.activeAnswerSequences = [];
+    this.isMarking = false;
+    this.markedPath = [];
+    this.errorPath = [];
     this.assignAnswerColors();
-    this.initializeBoard();
-    this.resetTimer();
+    
+    // Usa el tamaño del puzzle, no de la dificultad
+    this.initializeBoard(config.rows, config.cols);
+    this.resetTimer(config.difficulty);
+    
     this.isGameOver = false;
     this.showWinMenu = false;
     this.finalScore = 0;
-    // Limite de pasos según dificultad
-    switch (this.gameDifficulty) {
+    
+    // Límite de pasos según la dificultad del puzzle
+    switch (config.difficulty) {
       case 'facil':
         this.steps = 100;
         this.maxSteps = 100;
@@ -155,12 +168,14 @@ export class BoardComponent implements OnInit, OnDestroy {
         this.steps = 100;
         this.maxSteps = 100;
     }
+    
     this.unlockKeyboard();
     this.startTimer();
   }
 
-  resetTimer(): void {
-    switch (this.gameDifficulty) {
+  resetTimer(difficulty?: string): void {
+    const diff = difficulty || 'facil';
+    switch (diff) {
       case 'facil': this.timeLeft = 240; break;
       case 'medio': this.timeLeft = 180; break;
       case 'dificil': this.timeLeft = 120; break;
@@ -182,22 +197,19 @@ export class BoardComponent implements OnInit, OnDestroy {
     });
   }
 
-  initializeBoard(): void {
-    const answers = this.currentQuestions.map(q => q.answer.toUpperCase()); // Asegurar mayúsculas
+  // initializeBoard ahora recibe el tamaño como argumento
+  initializeBoard(rows: number, cols: number): void {
+    const answers = this.currentQuestions.map(q => q.answer.toUpperCase());
     if (answers.length === 0) {
-        this.board = []; // Tablero vacío
-        console.warn("No hay respuestas para colocar en el tablero.");
-        return;
+      this.board = [];
+      console.warn("No hay respuestas para colocar en el tablero.");
+      return;
     }
-
-    const difficulty = this.gameDifficulty;
-    const rows = difficulty === 'facil' ? 10 : difficulty === 'medio' ? 14 : 16;
-    const cols = difficulty === 'facil' ? 10 : difficulty === 'medio' ? 14 : 16;
 
     this.board = Array(rows).fill(null).map(() => Array(cols).fill(''));
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < cols; j++) {
-        this.board[i][j] = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // Letras A-Z
+        this.board[i][j] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
       }
     }
     this.placeAnswersRandomly(answers);
@@ -207,13 +219,13 @@ export class BoardComponent implements OnInit, OnDestroy {
   placeAnswersRandomly(answers: string[]): void {
     const occupiedPositions = new Set<string>();
     for (const answer of answers) {
-      if (!answer) continue; // Saltar si la respuesta es undefined o vacía
+      if (!answer) continue;
       let placed = false;
       let attempts = 0;
       const maxAttempts = 100;
       while (!placed && attempts < maxAttempts) {
         attempts++;
-        const orientation = Math.floor(Math.random() * 3); // 0:H, 1:V, 2:D (simplificada)
+        const orientation = Math.floor(Math.random() * 3); // 0:H, 1:V, 2:Escalera
         placed = this.tryPlaceAnswer(answer, orientation, occupiedPositions);
       }
       if (!placed) {
@@ -228,12 +240,18 @@ export class BoardComponent implements OnInit, OnDestroy {
     let startRowLimit = rows;
     let startColLimit = cols;
 
+    // 0: Horizontal, 1: Vertical, 2: Escalera (nuevo patrón)
     switch (orientation) {
-      case 0: startColLimit = cols - answer.length + 1; break;
-      case 1: startRowLimit = rows - answer.length + 1; break;
-      case 2: // Diagonal simple (arriba-izquierda a abajo-derecha)
-        startRowLimit = rows - answer.length + 1;
-        startColLimit = cols - answer.length + 1;
+      case 0: // Horizontal
+        startColLimit = cols - answer.length;
+        break;
+      case 1: // Vertical
+        startRowLimit = rows - answer.length;
+        break;
+      case 2: // Escalera (derecha-abajo)
+        // Necesita la mitad de la longitud de la palabra en filas y columnas
+        startRowLimit = rows - Math.ceil(answer.length / 2);
+        startColLimit = cols - Math.ceil(answer.length / 2);
         break;
     }
 
@@ -241,22 +259,30 @@ export class BoardComponent implements OnInit, OnDestroy {
 
     const startRow = Math.floor(Math.random() * startRowLimit);
     const startCol = Math.floor(Math.random() * startColLimit);
-
     const positions: [number, number][] = [];
     let possible = true;
 
     for (let i = 0; i < answer.length; i++) {
       let r = startRow, c = startCol;
-      if (orientation === 0) c += i;
-      else if (orientation === 1) r += i;
-      else { r += i; c += i; }
+      
+      if (orientation === 0) { // Horizontal
+        c += i;
+      } else if (orientation === 1) { // Vertical
+        r += i;
+      } else { // Escalera: alterna entre mover a la derecha y hacia abajo
+        r += Math.floor(i / 2);
+        c += Math.ceil(i / 2);
+      }
 
       if (r < 0 || r >= rows || c < 0 || c >= cols) {
-        possible = false; break;
+        possible = false;
+        break;
       }
+      
       const posKey = `${r},${c}`;
       if (occupiedPositions.has(posKey) && this.board[r][c] !== answer[i]) {
-        possible = false; break;
+        possible = false;
+        break;
       }
       positions.push([r, c]);
     }
@@ -276,173 +302,16 @@ export class BoardComponent implements OnInit, OnDestroy {
     const cols = this.board[0].length;
     if (rows === 0 || cols === 0) return;
 
-    let r, c;
-    let attempts = 0;
-    const maxAttempts = rows * cols; // Evitar bucle infinito si el tablero está lleno
-    do {
-        r = Math.floor(Math.random() * rows);
-        c = Math.floor(Math.random() * cols);
-        attempts++;
-        if (attempts > maxAttempts) { // Fallback si no se encuentra posición libre
-            r = 0; c = 0;
-            break;
-        }
-    } while (this.isPositionPartOfAnyAnswer(r,c));
-    r = 0; c = 0; // Asegurarse de que el carro comienza en la esquina superior izquierda
+    // Siempre coloca el carro en la esquina superior izquierda
+    const r = 0, c = 0;
     this.carPosition = { row: r, col: c };
     this.gameService.updateCarPosition(r, c);
   }
 
-  isPositionPartOfAnyAnswer(row: number, col: number): boolean {
-    // Esta función es una simplificación. Para ser preciso, necesitarías
-    // almacenar las coordenadas exactas de cada respuesta colocada.
-    // Por ahora, verifica si la letra en la celda es parte de alguna respuesta.
-    if (!this.board[row] || !this.board[row][col]) return false;
-    const letterInCell = this.board[row][col];
-    return this.currentQuestions.some(q => q.answer.includes(letterInCell));
-  }
-
-  checkForAnswerSequence(): void {
-    if (this.isGameOver || !this.board.length) return;
-    const currentRow = this.carPosition.row;
-    const currentCol = this.carPosition.col;
-    // Asegurarse de que la posición del carro es válida
-    if (currentRow < 0 || currentRow >= this.board.length || currentCol < 0 || currentCol >= this.board[0].length) {
-        return;
-    }
-    const currentLetter = this.board[currentRow][currentCol];
-
-    for (const question of this.currentQuestions) {
-      if (question.isFound || !question.answer) continue;
-
-      if (question.answer[0] === currentLetter) {
-        const isPartOfExistingActiveSequence = this.activeAnswerSequences.some(seq =>
-            seq.answerId === question.id &&
-            seq.positions.some(p => p.row === currentRow && p.col === currentCol)
-        );
-        if (isPartOfExistingActiveSequence) continue;
-
-        const alreadyFoundInFoundPositions = this.foundPositions.some(pos =>
-          pos.row === currentRow && pos.col === currentCol && pos.answerId === question.id && pos.letterIndex === 0
-        );
-
-        if (!alreadyFoundInFoundPositions) {
-          // Iniciar nueva secuencia
-          this.activeAnswerSequences.push({
-            answerId: question.id,
-            answerText: question.answer,
-            positions: [{ row: currentRow, col: currentCol }],
-            isComplete: question.answer.length === 1 // Completa si la respuesta es de 1 letra
-          });
-          if (question.answer.length === 1) {
-             this.markAnswerAsFound(this.activeAnswerSequences[this.activeAnswerSequences.length - 1]);
-          }
-        }
-      }
-    }
-    this.continueAnswerSequences(currentRow, currentCol, currentLetter);
-    this.activeAnswerSequences = this.activeAnswerSequences.filter(seq => !seq.isComplete);
-  }
-
-  continueAnswerSequences(row: number, col: number, letter: string): void {
-    const sequencesToKeep: AnswerSequence[] = [];
-
-    for (let i = this.activeAnswerSequences.length - 1; i >= 0; i--) {
-        let sequence = this.activeAnswerSequences[i];
-        if (sequence.isComplete) {
-            // sequencesToKeep.push(sequence); // No es necesario mantenerla aquí si se filtra después
-            continue;
-        }
-
-        const answer = sequence.answerText;
-        const nextLetterIndex = sequence.positions.length;
-
-        if (nextLetterIndex >= answer.length) continue;
-
-        if (answer[nextLetterIndex] === letter) {
-            const lastPos = sequence.positions[nextLetterIndex - 1];
-            const rowDiff = Math.abs(row - lastPos.row);
-            const colDiff = Math.abs(col - lastPos.col);
-            const isAdjacent = (rowDiff <= 1 && colDiff <= 1) && (rowDiff + colDiff > 0);
-
-            // Evitar añadir la misma celda dos veces seguidas o volver a una celda ya en la secuencia.
-            const currentCellAlreadyInSequence = sequence.positions.some(p => p.row === row && p.col === col);
-
-            if (isAdjacent && !currentCellAlreadyInSequence) {
-                const updatedSequence: AnswerSequence = {
-                    ...sequence,
-                    positions: [...sequence.positions, { row, col }],
-                    isComplete: nextLetterIndex + 1 === answer.length
-                };
-
-                if (updatedSequence.isComplete) {
-                    this.markAnswerAsFound(updatedSequence);
-                    // No la removemos de activeAnswerSequences aquí, se filtrará al final.
-                } else {
-                    // Actualizar la secuencia en activeAnswerSequences
-                    this.activeAnswerSequences[i] = updatedSequence;
-                }
-            } else if (!isAdjacent && answer[0] !== letter) {
-                // No es adyacente Y la letra actual no es el inicio de esta palabra, eliminar secuencia.
-                 this.activeAnswerSequences.splice(i, 1);
-            }
-            // Si es adyacente pero currentCellAlreadyInSequence es true, o si no es adyacente pero answer[0] === letter,
-            // la secuencia se mantiene como está para este ciclo (podría ser un nuevo intento o una palabra diferente).
-        } else {
-            // La letra no coincide con la siguiente esperada.
-            // Si la letra actual NO es la primera letra de esta secuencia, entonces esta secuencia se rompe.
-            if (answer[0] !== letter) {
-                 this.activeAnswerSequences.splice(i, 1);
-            }
-            // Si es la primera letra, se mantiene (podría ser un nuevo intento o una palabra diferente).
-        }
-    }
-    // Filtrar duplicados y completadas al final
-    this.activeAnswerSequences = this.activeAnswerSequences.filter((seq, index, self) =>
-        !seq.isComplete &&
-        index === self.findIndex((s) => s.answerId === seq.answerId) // Mantiene la primera instancia de cada answerId
-    );
-  }
-
-
-  markAnswerAsFound(sequence: AnswerSequence): void {
-    const questionIndex = this.currentQuestions.findIndex(q => q.id === sequence.answerId);
-    if (questionIndex === -1 || this.currentQuestions[questionIndex].isFound) return;
-
-    this.currentQuestions[questionIndex].isFound = true;
-    sequence.positions.forEach((pos, index) => {
-      if(this.currentQuestions[questionIndex].foundLetters.length > index){
-         this.currentQuestions[questionIndex].foundLetters[index] = true;
-      }
-      this.questionService.markLetterFound(sequence.answerId, index);
-
-      const alreadyInFound = this.foundPositions.some(fp => fp.row === pos.row && fp.col === pos.col && fp.answerId === sequence.answerId && fp.letterIndex === index);
-      if(!alreadyInFound) {
-        this.foundPositions.push({
-          row: pos.row,
-          col: pos.col,
-          answerId: sequence.answerId,
-          letterIndex: index,
-          color: this.answerColors[sequence.answerId]
-        });
-      }
-    });
-
-    this.activeAnswerSequences = this.activeAnswerSequences.filter(seq => seq.answerId !== sequence.answerId);
-
-    if (this.currentQuestions.every(q => q.isFound)) {
-      this.finalScore = this.calculateScore();
-      this.showWinMenu = true;
-      this.lockKeyboard();
-      this.isGameOver = true;
-      if (this.timerInterval) clearInterval(this.timerInterval);
-    }
-    this.cdr.detectChanges();
-  }
-
   calculateScore(): number {
-    const factor = this.gameDifficulty === 'facil' ? 0.7
-                 : this.gameDifficulty === 'medio' ? 0.5
+    const difficulty = this.gameConfig?.difficulty || 'facil';
+    const factor = difficulty === 'facil' ? 0.7
+                 : difficulty === 'medio' ? 0.5
                  : 0.3;
     return Math.max(0, Math.floor((this.timeLeft * factor) + this.steps));
   }
@@ -460,16 +329,24 @@ export class BoardComponent implements OnInit, OnDestroy {
     return this.foundPositions.some(pos => pos.row === i && pos.col === j);
   }
 
+  // NUEVAS FUNCIONES PARA EL FEEDBACK VISUAL
+  isPositionInErrorPath(row: number, col: number): boolean {
+    return this.errorPath.some(p => p.row === row && p.col === col);
+  }
+
+  isPositionMarked(row: number, col: number): boolean {
+    return this.markedPath.some(p => p.row === row && p.col === col);
+  }
+
   getQuestionProgress(questionId: string): { found: number, total: number } {
     const question = this.currentQuestions.find(q => q.id === questionId);
     if (!question || !question.answer) return { found: 0, total: 0 };
-    const foundCount = question.foundLetters.filter((f: boolean) => f).length;
+    const foundCount = question.foundLetters?.filter((f: boolean) => f).length || 0;
     return { found: foundCount, total: question.answer.length };
   }
 
   isQuestionLetterFound(questionId: string, letterIndex: number): boolean {
     const question = this.currentQuestions.find(q => q.id === questionId);
-    // Añadir chequeo para foundLetters y su longitud
     return question && question.foundLetters && question.foundLetters.length > letterIndex ? question.foundLetters[letterIndex] : false;
   }
 
@@ -483,7 +360,7 @@ export class BoardComponent implements OnInit, OnDestroy {
       case 'right': if (newPos.col < this.board[0].length - 1) newPos.col++; break;
     }
     if (newPos.row !== this.carPosition.row || newPos.col !== this.carPosition.col) {
-        this.gameService.updateCarPosition(newPos.row, newPos.col);
+      this.gameService.updateCarPosition(newPos.row, newPos.col);
     }
   }
 
@@ -503,41 +380,153 @@ export class BoardComponent implements OnInit, OnDestroy {
 
   resetGame(): void {
     if (this.timerInterval) {
-        clearInterval(this.timerInterval);
-        this.timerInterval = null;
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
     }
-    this.isGameInitialized = false; // <- AÑADIR ESTA LÍNEA
-    this.questionService.resetCurrentQuestionsProgress();
-    this.questionService.loadGameQuestions(this.gameDifficulty);}
+    this.isGameInitialized = false;
+    
+    if (this.gameConfig) {
+      // Resetear el progreso de las preguntas
+      this.currentQuestions.forEach(q => {
+        q.isFound = false;
+        q.foundLetters = new Array(q.answer.length).fill(false);
+      });
+      this.initializeGame(this.gameConfig);
+    }
+  }
 
   lockKeyboard() { this.keyboardLocked = true; }
   unlockKeyboard() { this.keyboardLocked = false; }
 
-  addMove(direction: 'up' | 'down' | 'left' | 'right') {
+  // NUEVA FUNCIÓN PARA OBTENER LA ETIQUETA DEL MOVIMIENTO
+  getMoveLabel(move: string): string {
+    const labels: { [key: string]: string } = {
+      up: 'Arriba',
+      down: 'Abajo',
+      left: 'Izquierda',
+      right: 'Derecha',
+      mark: 'MARCAR',
+      finish: 'FINAL'
+    };
+    return labels[move] || '';
+  }
+
+  addMove(direction: 'up' | 'down' | 'left' | 'right' | 'mark' | 'finish') {
     if (this.moveSequence.length < this.steps) {
+      if (direction === 'mark' && this.isMarking) return; // No marcar si ya está marcando
+      if (direction === 'finish' && !this.isMarking) return; // No finalizar si no está marcando
+
       this.moveSequence.push(direction);
+      
+      if (direction === 'mark') this.isMarking = true;
+      if (direction === 'finish') this.isMarking = false;
     }
+
+    
+
   }
 
   clearMoveSequence() {
     this.moveSequence = [];
+    this.isMarking = false; // Resetea el estado de marcado también
   }
 
   async sendMoveSequence() {
-    let movesToExecute = Math.min(this.moveSequence.length, this.steps);
-    for (let i = 0; i < movesToExecute; i++) {
-      this.moveCar(this.moveSequence[i]);
-      await new Promise(res => setTimeout(res, 120));
+    this.lockKeyboard();
+    let isCurrentlyMarking = false;
+    let localMarkedPath: {row: number, col: number}[] = [];
+    let localMarkedWord = '';
+
+    for (const move of this.moveSequence) {
+      if (this.steps <= 0) break;
+
+      if (move === 'mark') {
+        isCurrentlyMarking = true;
+        // La posición actual del carro es el inicio de la palabra
+        localMarkedPath.push({ ...this.carPosition });
+        localMarkedWord += this.board[this.carPosition.row][this.carPosition.col];
+        this.markedPath.push({ ...this.carPosition }); // Para feedback visual
+        continue;
+      }
+
+      if (move === 'finish') {
+        isCurrentlyMarking = false;
+        break; // Termina la secuencia de movimientos, procede a la validación
+      }
+
+      // Si es un movimiento normal
+      this.moveCar(move);
       this.steps--;
-      if (this.steps === 0) break;
-    }
-    this.clearMoveSequence();
-    // Si los pasos llegan a 0, bloquear teclado y movimientos
-    if (this.steps === 0) {
-      this.lockKeyboard();
-      this.isGameOver = true;
+
+      if (isCurrentlyMarking) {
+        localMarkedPath.push({ ...this.carPosition });
+        localMarkedWord += this.board[this.carPosition.row][this.carPosition.col];
+        this.markedPath.push({ ...this.carPosition }); // Para feedback visual
+      }
+
+      await new Promise(res => setTimeout(res, 120));
       this.cdr.detectChanges();
     }
+
+    // Validación al final de la secuencia
+    if (localMarkedWord) {
+      const questionFound = this.currentQuestions.find(q => !q.isFound && q.answer === localMarkedWord);
+
+      if (questionFound) {
+        // Palabra correcta
+        this.markAnswerAsFound(questionFound, localMarkedPath);
+      } else {
+        // Palabra incorrecta, marcar error y terminar juego
+        this.errorPath = [...localMarkedPath];
+        this.isGameOver = true;
+        this.cdr.detectChanges();
+        await new Promise(res => setTimeout(res, 1500)); // Espera para mostrar el error
+        this.resetGame();
+      }
+    }
+
+    this.clearMoveSequence();
+    this.markedPath = [];
+    this.unlockKeyboard();
+
+    if (this.steps === 0 && !this.isGameOver) {
+      this.isGameOver = true;
+      this.lockKeyboard();
+      this.cdr.detectChanges();
+    }
+  }
+
+  // Modifica markAnswerAsFound para recibir el camino
+  markAnswerAsFound(question: Question, path: {row: number, col: number}[]): void {
+    const questionIndex = this.currentQuestions.findIndex(q => q.id === question.id);
+    if (questionIndex === -1 || this.currentQuestions[questionIndex].isFound) return;
+
+    this.currentQuestions[questionIndex].isFound = true;
+    
+    path.forEach((pos, index) => {
+      this.questionService.markLetterFound(question.id, index);
+      
+      const alreadyInFound = this.foundPositions.some(fp => fp.row === pos.row && fp.col === pos.col);
+      if (!alreadyInFound) {
+        this.foundPositions.push({
+          row: pos.row,
+          col: pos.col,
+          answerId: question.id,
+          letterIndex: index,
+          color: this.answerColors[question.id]
+        });
+      }
+    });
+
+    if (this.currentQuestions.every(q => q.isFound)) {
+      this.finalScore = this.calculateScore();
+      this.showWinMenu = true;
+      this.lockKeyboard();
+      this.isGameOver = true;
+      if (this.timerInterval) clearInterval(this.timerInterval);
+    }
+    
+    this.cdr.detectChanges();
   }
 
   submitScore() {
@@ -546,7 +535,7 @@ export class BoardComponent implements OnInit, OnDestroy {
       alert('Debes iniciar sesión para enviar tu puntaje.');
       return;
     }
-    // Aquí puedes usar HttpClient directamente o un servicio
+    
     fetch('http://localhost:8000/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

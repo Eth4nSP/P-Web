@@ -21,3 +21,4 @@ describe('CellComponent', () => {
     expect(component).toBeTruthy();
   });
 });
+

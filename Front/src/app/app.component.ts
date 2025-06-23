@@ -20,3 +20,4 @@ export class AppComponent {
     // Opcional: redirigir a inicio o login
   }
 }
+

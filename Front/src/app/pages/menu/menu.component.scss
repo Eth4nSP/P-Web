@@ -66,7 +66,6 @@ body,
     }
 }
 
-
 /* Minecraft-style pixel font */
 
 h1 {
@@ -128,7 +127,6 @@ h1 {
         transform: scale(1);
     }
 }
-
 
 /* El cuadro que contiene el menú */
 
@@ -212,7 +210,6 @@ h1 {
     filter: drop-shadow(0 0 8px #e0e7af88);
 }
 
-
 /* Responsive: en pantallas chicas, botones verticales */
 
 @media (max-width: 400px) {
@@ -228,7 +225,6 @@ h1 {
         padding: 18px 4vw 14px 4vw;
     }
 }
-
 
 /* Estilos para el menú de dificultad debajo del botón Jugar */
 
@@ -313,13 +309,11 @@ h1 {
     filter: brightness(1.2) drop-shadow(0 0 16px #b22222cc);
 }
 
-
 /* Partículas animadas de fondo */
 
 .bg-particles {
     display: none;
 }
-
 
 /* Animaciones de fondo */
 
@@ -346,7 +340,6 @@ h1 {
     }
 }
 
-
 /* Responsive: menú ocupa todo el ancho en móvil y se ajusta debajo del botón */
 
 @media (max-width: 600px) {
@@ -363,7 +356,6 @@ h1 {
         padding: 16px 4vw 12px 4vw;
     }
 }
-
 
 /* Nuevos estilos para la cinemática */
 
@@ -457,3 +449,6 @@ h1 {
         font-size: 1.2rem;
     }
 }
+
+
+

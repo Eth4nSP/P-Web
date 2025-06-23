@@ -3,29 +3,28 @@
         <div class="legend-title">🧙 Historia:</div>
         <div class="legend-text">
             Despiertas en un bosque donde cada hoja muestra fragmentos de código. Un árbol-antiguo llamado <b>RootNode</b> te habla con voz críptica:<br><br>
-            <i>“Para salir de este entorno, encuentra las palabras que alguna vez me compilaron.”</i>
+            <i>"Para salir de este entorno, encuentra las palabras que alguna vez me compilaron."</i>
             <hr>
-            <b>¿Cómo te mueves?</b><br> Usa los botones para mover el coche por el tablero. Encadena movimientos y presiona "Enviar" para avanzar varios pasos de una vez.
+            <b>¿Cómo te mueves?</b><br> Usa los botones o las flechas para añadir movimientos. Encadena varios y presiona "Enviar" para ejecutarlos.
             <hr>
-            <b>¿Cómo pasas de nivel?</b><br> Encuentra todas las respuestas a las preguntas que aparecen en la parte derecha del tablero. Cada respuesta es una palabra clave que desbloquea el siguiente nivel.
+            <b>¿Cómo marcar palabras?</b><br> Usa el botón "MARCAR", añade los movimientos para trazar la palabra y luego presiona "FINALIZAR". Si la palabra es correcta, ¡sumas puntos! Si no, pierdes.
             <hr>
-            <b>¿Cómo pierdes?</b><br> Si el tiempo se agota antes de encontrar todas las respuestas <br> O te quedas sin pasos, el juego termina. ¡Pero puedes reiniciar y volver a intentarlo!
-            <hr>
+            <b>¿Cómo pierdes?</b><br> Si el tiempo se agota, te quedas sin pasos o marcas una palabra incorrecta, el juego termina. ¡Pero puedes reiniciar y volver a intentarlo!
         </div>
     </div>
     <div class="game-container">
-        <h2>Sopa de Letras: Edición Dinámica</h2>
+        <h2>{{ puzzleName || 'Sopa de Letras' }}</h2>
 
         <div class="timer" [class.game-over]="isGameOver && timeLeft === 0">
             ⏰ Tiempo restante: {{ timeLeft }}s
         </div>
 
-        <div *ngIf="isGameOver && !showWinMenu && timeLeft === 0" class="game-over-modal">
+        <div *ngIf="isGameOver && !showWinMenu" class="game-over-modal">
             <div class="game-over-content">
                 <h2>¡Game Over!</h2>
-                <p>Se acabó el tiempo.</p>
+                <p>{{ errorPath.length > 0 ? 'Marcaste una palabra incorrecta.' : (timeLeft === 0 ? 'Se acabó el tiempo.' : 'Te quedaste sin pasos.') }}</p>
                 <button (click)="resetGame()">Reiniciar</button>
-                <a class="home-link" routerLink="/" routerLinkActive="active-link"><button>HOME</button></a>
+                <a class="home-link" routerLink="/"><button>HOME</button></a>
             </div>
         </div>
 
@@ -36,14 +35,20 @@
                 <p>Puntaje final: <b>{{ finalScore }}</b></p>
                 <button (click)="resetGame()">Jugar de nuevo</button>
                 <button (click)="submitScore()">Subir Puntaje</button>
-                <a class="home-link" routerLink="/" routerLinkActive="active-link"><button>HOME</button></a>
+                <a class="home-link" routerLink="/"><button>HOME</button></a>
             </div>
         </div>
 
         <div class="game-layout" [class.mobile-layout]="isMobileDevice" [class.desktop-layout]="!isMobileDevice">
             <div class="board" *ngIf="board.length > 0">
                 <div class="row" *ngFor="let row of board; let i = index">
-                    <app-cell *ngFor="let cell of row; let j = index" [value]="cell" [isCarPosition]="isCarPosition(i, j)" [isFound]="isPositionFound(i, j)" [foundColor]="getPositionColor(i, j)">
+                    <app-cell *ngFor="let cell of row; let j = index"
+          [value]="cell"
+          [isCarPosition]="isCarPosition(i, j)"
+          [isFound]="isPositionFound(i, j)"
+          [foundColor]="getPositionColor(i, j) || ''"
+          [isError]="isPositionInErrorPath(i, j)"
+          [isMarked]="isPositionMarked(i, j)">
                     </app-cell>
                 </div>
             </div>
@@ -52,12 +57,11 @@
             </div>
             <div *ngIf="currentQuestions.length === 0" class="no-questions">
                 <p>No hay preguntas disponibles para esta dificultad.</p>
-                <p>Por favor, ve al <a routerLink="/admin">Panel de Administrador</a> para agregar algunas.</p>
+                <p>Por favor, ve al <a routerLink="/admin-panel">Panel de Administrador</a> para agregar algunas.</p>
             </div>
 
-
             <div class="target-elements" *ngIf="currentQuestions.length > 0">
-                <h3>Encuentra las Respuestas a estas Preguntas:</h3>
+                <h3>Encuentra las Respuestas:</h3>
                 <div class="questions-container">
                     <div class="question-item" *ngFor="let question of currentQuestions" [style.border-left-color]="answerColors[question.id]" [class.question-found]="question.isFound">
                         <div class="question-text">
@@ -65,15 +69,15 @@
                         </div>
                         <div class="answer-letters">
                             <span *ngFor="let letter of question.answer.split(''); let i = index" [class.found]="isQuestionLetterFound(question.id, i)" [style.background-color]="isQuestionLetterFound(question.id, i) ? answerColors[question.id] : ''">
-              {{ letter }}
-            </span>
+                                {{ letter }}
+                            </span>
                         </div>
                         <div class="progress">
-                            {{ getQuestionProgress(question.id).found }} de {{ getQuestionProgress(question.id).total }} letras
+                            {{ getQuestionProgress(question.id).found }} de {{ question.answer.length }} letras
                         </div>
                     </div>
                     <div class="game-actions">
-                        <a class="home-link" routerLink="/" routerLinkActive="active-link"><button>HOME</button></a>
+                        <a class="home-link" routerLink="/"><button>HOME</button></a>
                         <button class="reset-button" type="button" (click)="resetGame()">REINICIAR</button>
                     </div>
                 </div>
@@ -84,24 +88,27 @@
             <div class="move-buttons">
                 <button type="button" class="btn-up" (click)="addMove('up')">↑</button>
                 <button type="button" class="btn-left" (click)="addMove('left')">←</button>
+                <!-- Corregido: [disabled] apunta a isMarkingVisual -->
+                <button type="button" class="btn-mark" (click)="addMove('mark')" [disabled]="isMarkingVisual" title="Empezar a marcar (Espacio)">MARCAR</button>
                 <button type="button" class="btn-right" (click)="addMove('right')">→</button>
                 <button type="button" class="btn-down" (click)="addMove('down')">↓</button>
+                <button type="button" class="btn-finish" (click)="addMove('finish')" [disabled]="!isMarkingVisual" title="Finalizar marcado (F)">FINAL</button>
             </div>
             <div class="move-sequence">
                 <span *ngIf="moveSequence.length === 0" class="move-placeholder">Selecciona movimientos...</span>
                 <ng-container *ngFor="let move of moveSequence; let idx = index">
                     <span class="move-chip" [ngClass]="'move-' + move">
-                  {{ move === 'up' ? 'Arriba' : move === 'down' ? 'Abajo' : move === 'left' ? 'Izquierda' : 'Derecha' }}
-                </span>
+                        {{ getMoveLabel(move) }}
+                    </span>
                 </ng-container>
-                <button *ngIf="moveSequence.length > 0" class="clear-moves" (click)="clearMoveSequence()" title="Limpiar secuencia">✕</button>
+                <button *ngIf="moveSequence.length > 0" class="clear-moves" (click)="clearMoveSequence()" title="Limpiar secuencia (Backspace)">✕</button>
             </div>
-            <button class="send-moves" [disabled]="moveSequence.length === 0" (click)="sendMoveSequence()">Enviar</button>
+            <button class="send-moves" [disabled]="moveSequence.length === 0" (click)="sendMoveSequence()">Enviar (Enter)</button>
             <div class="steps-counter">Pasos: {{ steps }}/{{ maxSteps }}</div>
         </div>
 
         <div class="keyboard-instructions" *ngIf="!isMobileDevice && currentQuestions.length > 0">
-            <p>Usa las flechas del teclado para moverte.</p>
+            <p>También puedes usar las flechas, Espacio, F, Enter y Backspace.</p>
         </div>
     </div>
 </div>

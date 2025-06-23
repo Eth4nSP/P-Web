@@ -19,3 +19,4 @@ describe('PuntajeComponent', () => {
     expect(component).toBeTruthy();
   });
 });
+
