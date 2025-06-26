@@ -11,7 +11,7 @@ export const routes: Routes = [
   { path: '', component: MenuComponent, pathMatch: 'full' },
   { path: 'game', component: BoardComponent },
   { path: 'admin', component: AdminPanelComponent },
-  { path: 'scoreboard', component: PuntajeComponent }, // Assuming BoardComponent is used for scoreboard as well
+  { path: 'puntaje', component: PuntajeComponent }, // Assuming BoardComponent is used for scoreboard as well
   { path: 'login', component: LoginComponent},
   { path: 'register', component: RegisterComponent },
   { path: '**', redirectTo: '' } 
