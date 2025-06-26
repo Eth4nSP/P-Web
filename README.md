@@ -24,8 +24,14 @@
 ## 🚀 Comenzar
 
 ```bash
+cd front
 npm install
-npm start
+npm run dev --ssl true
+composer install
+cd..
+cd backend
+php artisan migrate
+php artisan server
 ```
 Abre tu navegador en [http://localhost:4200](http://localhost:4200) y ¡a jugar!
 
