@@ -24,14 +24,8 @@
 ## 🚀 Comenzar
 
 ```bash
-cd front
 npm install
-npm run dev --ssl true
-composer install
-cd..
-cd backend
-php artisan migrate
-php artisan server
+npm start
 ```
 Abre tu navegador en [http://localhost:4200](http://localhost:4200) y ¡a jugar!
 
@@ -58,8 +52,6 @@ Consulta tu puntaje y mejora tus tiempos en la sección **Puntaje** del menú.
 ---
 
 ## 👨‍💻 Autor
-Hecho con pasión por programadores, para programadores.
+Mapuches.
 
 ---
-
-¡Que gane el mejor dev! 🚗💨
