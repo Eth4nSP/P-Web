@@ -45,13 +45,11 @@ export class BoardComponent implements OnInit, OnDestroy {
   puzzleName: string = '';
   isMarkingVisual: boolean = false;
 
-  // NUEVAS PROPIEDADES PARA EL SISTEMA DE MARCADO
   moveSequence: Array<'up' | 'down' | 'left' | 'right' | 'mark' | 'finish'> = [];
   isMarking: boolean = false;
   markedPath: { row: number; col: number }[] = [];
   errorPath: { row: number; col: number }[] = [];
 
-  // Configuración del juego
   gameConfig: any = null;
 
   constructor(
@@ -93,13 +91,11 @@ export class BoardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.checkDeviceType();
-    // Obtener el nombre del puzzle desde la configuración del juego
     const gameConfig = this.questionService.getCurrentGameConfig();
     if (gameConfig) {
       this.puzzleName = gameConfig.puzzleName || 'Sopa de Letras';
     }
    
-    // Lee toda la configuración del juego desde localStorage
     const gameConfigString = localStorage.getItem('gameConfig');
     if (gameConfigString) {
       this.gameConfig = JSON.parse(gameConfigString);
@@ -111,28 +107,26 @@ export class BoardComponent implements OnInit, OnDestroy {
       }
     } else {
       console.warn("No se encontró configuración de juego. Volviendo al menú.");
-      // Opcional: Redirigir al menú si no hay configuración
     }
     this.cdr.detectChanges();
 
-    // Suscripción a la posición del carro
     const carPosSub = this.gameService.getCarPosition().subscribe(position => {
       this.carPosition = position;
     });
     this.subscriptions.add(carPosSub);
   }
 
-  // Método para manejar el estado de marcado visual
+  
   private updateMarkingVisualState(): void {
-    // Actualizar isMarkingVisual basado en si hay un 'mark' sin su correspondiente 'finish'
+    
     const lastMarkIndex = this.moveSequence.lastIndexOf('mark');
     const lastFinishIndex = this.moveSequence.lastIndexOf('finish');
     
-    // Si hay un 'mark' más reciente que el último 'finish', entonces está marcando
+    
     this.isMarkingVisual = lastMarkIndex > lastFinishIndex || (lastMarkIndex !== -1 && lastFinishIndex === -1);
   }
 
-  // initializeGame ahora recibe la configuración completa del puzzle
+  
   initializeGame(config: any): void {
     this.foundPositions = [];
     this.isMarking = false;
@@ -141,7 +135,7 @@ export class BoardComponent implements OnInit, OnDestroy {
     this.isMarkingVisual = false;
     this.assignAnswerColors();
    
-    // Usa el tamaño del puzzle, no de la dificultad
+    
     this.initializeBoard(config.rows, config.cols);
     this.resetTimer(config.difficulty);
    
@@ -149,7 +143,7 @@ export class BoardComponent implements OnInit, OnDestroy {
     this.showWinMenu = false;
     this.finalScore = 0;
    
-    // Límite de pasos según la dificultad del puzzle
+    
     switch (config.difficulty) {
       case 'facil':
         this.steps = 100;
@@ -196,7 +190,7 @@ export class BoardComponent implements OnInit, OnDestroy {
     });
   }
 
-  // initializeBoard ahora recibe el tamaño como argumento
+  
   initializeBoard(rows: number, cols: number): void {
     const answers = this.currentQuestions.map(q => q.answer.toUpperCase());
     if (answers.length === 0) {
@@ -223,7 +217,7 @@ export class BoardComponent implements OnInit, OnDestroy {
       const maxAttempts = 100;
       while (!placed && attempts < maxAttempts) {
         attempts++;
-        const orientation = Math.floor(Math.random() * 3); // 0:H, 1:V, 2:Escalera
+        const orientation = Math.floor(Math.random() * 3); 
         placed = this.tryPlaceAnswer(answer, orientation, occupiedPositions);
       }
       if (!placed) {
@@ -238,16 +232,16 @@ export class BoardComponent implements OnInit, OnDestroy {
     let startRowLimit = rows;
     let startColLimit = cols;
 
-    // 0: Horizontal, 1: Vertical, 2: Escalera (nuevo patrón)
+    
     switch (orientation) {
-      case 0: // Horizontal
+      case 0: 
         startColLimit = cols - answer.length;
         break;
-      case 1: // Vertical
+      case 1: 
         startRowLimit = rows - answer.length;
         break;
-      case 2: // Escalera (derecha-abajo)
-        // Necesita la mitad de la longitud de la palabra en filas y columnas
+      case 2: 
+        
         startRowLimit = rows - Math.ceil(answer.length / 2);
         startColLimit = cols - Math.ceil(answer.length / 2);
         break;
@@ -263,11 +257,11 @@ export class BoardComponent implements OnInit, OnDestroy {
     for (let i = 0; i < answer.length; i++) {
       let r = startRow, c = startCol;
      
-      if (orientation === 0) { // Horizontal
+      if (orientation === 0) { 
         c += i;
-      } else if (orientation === 1) { // Vertical
+      } else if (orientation === 1) { 
         r += i;
-      } else { // Escalera: alterna entre mover a la derecha y hacia abajo
+      } else { 
         r += Math.floor(i / 2);
         c += Math.ceil(i / 2);
       }
@@ -300,7 +294,7 @@ export class BoardComponent implements OnInit, OnDestroy {
     const cols = this.board[0].length;
     if (rows === 0 || cols === 0) return;
 
-    // Siempre coloca el carro en la esquina superior izquierda
+    
     const r = 0, c = 0;
     this.carPosition = { row: r, col: c };
     this.gameService.updateCarPosition(r, c);
@@ -327,7 +321,7 @@ export class BoardComponent implements OnInit, OnDestroy {
     return this.foundPositions.some(pos => pos.row === i && pos.col === j);
   }
 
-  // NUEVAS FUNCIONES PARA EL FEEDBACK VISUAL
+  
   isPositionInErrorPath(row: number, col: number): boolean {
     return this.errorPath.some(p => p.row === row && p.col === col);
   }
@@ -386,7 +380,7 @@ export class BoardComponent implements OnInit, OnDestroy {
     this.isGameInitialized = false;
    
     if (this.gameConfig) {
-      // Resetear el progreso de las preguntas
+      
       this.currentQuestions.forEach(q => {
         q.isFound = false;
         q.foundLetters = new Array(q.answer.length).fill(false);
@@ -398,7 +392,7 @@ export class BoardComponent implements OnInit, OnDestroy {
   lockKeyboard() { this.keyboardLocked = true; }
   unlockKeyboard() { this.keyboardLocked = false; }
 
-  // NUEVA FUNCIÓN PARA OBTENER LA ETIQUETA DEL MOVIMIENTO
+  
   getMoveLabel(move: string): string {
     const labels: { [key: string]: string } = {
       up: 'Arriba',
@@ -413,8 +407,8 @@ export class BoardComponent implements OnInit, OnDestroy {
 
   addMove(direction: 'up' | 'down' | 'left' | 'right' | 'mark' | 'finish') {
     if (this.moveSequence.length < this.steps) {
-      if (direction === 'mark' && this.isMarking) return; // No marcar si ya está marcando
-      if (direction === 'finish' && !this.isMarking) return; // No finalizar si no está marcando
+      if (direction === 'mark' && this.isMarking) return; 
+      if (direction === 'finish' && !this.isMarking) return; 
 
       this.moveSequence.push(direction);
      
@@ -425,7 +419,7 @@ export class BoardComponent implements OnInit, OnDestroy {
         this.isMarking = false;
       }
       
-      // Actualizar el estado visual después de cada cambio
+      
       this.updateMarkingVisualState();
     }
   }
@@ -433,7 +427,7 @@ export class BoardComponent implements OnInit, OnDestroy {
   clearMoveSequence() {
     this.moveSequence = [];
     this.isMarking = false;
-    this.isMarkingVisual = false; // Resetear también el estado visual
+    this.isMarkingVisual = false; 
   }
 
   async sendMoveSequence() {
@@ -448,16 +442,16 @@ export class BoardComponent implements OnInit, OnDestroy {
 
       if (move === 'mark') {
         isCurrentlyMarking = true;
-        // Iniciar nueva palabra
+        
         currentWordPath = [{ ...this.carPosition }];
         currentWord = this.board[this.carPosition.row][this.carPosition.col];
-        this.markedPath.push({ ...this.carPosition }); // Para feedback visual
+        this.markedPath.push({ ...this.carPosition }); 
         continue;
       }
 
       if (move === 'finish') {
         isCurrentlyMarking = false;
-        // Finalizar palabra actual
+        
         if (currentWord) {
           allWordsFound.push({ word: currentWord, path: [...currentWordPath] });
           currentWordPath = [];
@@ -466,55 +460,55 @@ export class BoardComponent implements OnInit, OnDestroy {
         continue;
       }
 
-      // Si es un movimiento normal
+      
       this.moveCar(move);
       this.steps--;
       
       if (isCurrentlyMarking) {
         currentWordPath.push({ ...this.carPosition });
         currentWord += this.board[this.carPosition.row][this.carPosition.col];
-        this.markedPath.push({ ...this.carPosition }); // Para feedback visual
+        this.markedPath.push({ ...this.carPosition }); 
       }
 
       await new Promise(res => setTimeout(res, 120));
       this.cdr.detectChanges();
     }
 
-    // Si quedó una palabra sin finalizar (el usuario no puso 'finish' al final)
+    
     if (isCurrentlyMarking && currentWord) {
       allWordsFound.push({ word: currentWord, path: [...currentWordPath] });
     }
 
-    // Validación de todas las palabras encontradas
+    
     let allWordsCorrect = true;
     let wordsFoundInThisSequence = 0;
 
     for (const wordData of allWordsFound) {
       const questionFound = this.currentQuestions.find(q => !q.isFound && q.answer === wordData.word);
       if (questionFound) {
-        // Palabra correcta
+        
         this.markAnswerAsFound(questionFound, wordData.path);
         wordsFoundInThisSequence++;
       } else {
-        // Palabra incorrecta
+        
         allWordsCorrect = false;
         this.errorPath = [...wordData.path];
         break;
       }
     }
 
-    // Si alguna palabra fue incorrecta, terminar el juego
+    
     if (!allWordsCorrect) {
       this.isGameOver = true;
       this.cdr.detectChanges();
-      await new Promise(res => setTimeout(res, 1500)); // Espera para mostrar el error
+      await new Promise(res => setTimeout(res, 1500));
       this.resetGame();
     }
 
     this.clearMoveSequence();
     this.markedPath = [];
     this.unlockKeyboard();
-    this.updateMarkingVisualState(); // Actualizar estado visual al final
+    this.updateMarkingVisualState(); 
 
     if (this.steps === 0 && !this.isGameOver) {
       this.isGameOver = true;
@@ -523,7 +517,7 @@ export class BoardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Modifica markAnswerAsFound para recibir el camino
+  
   markAnswerAsFound(question: Question, path: {row: number, col: number}[]): void {
     const questionIndex = this.currentQuestions.findIndex(q => q.id === question.id);
     if (questionIndex === -1 || this.currentQuestions[questionIndex].isFound) return;
