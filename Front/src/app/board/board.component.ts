@@ -30,14 +30,11 @@ export class BoardComponent implements OnInit, OnDestroy {
   maxSteps: number = 100;
   board: string[][] = [];
   carPosition = { row: 0, col: 0 };
-
   currentQuestions: Question[] = [];
   foundPositions: FoundPosition[] = [];
-
   answerColors: { [key: string]: string } = {};
   private isGameInitialized: boolean = false;
   private subscriptions: Subscription = new Subscription();
-
   isMobileDevice: boolean = false;
   timeLeft: number = 0;
   timerInterval: any = null;
@@ -96,19 +93,18 @@ export class BoardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.checkDeviceType();
-
     // Obtener el nombre del puzzle desde la configuración del juego
     const gameConfig = this.questionService.getCurrentGameConfig();
     if (gameConfig) {
       this.puzzleName = gameConfig.puzzleName || 'Sopa de Letras';
     }
-    
+   
     // Lee toda la configuración del juego desde localStorage
     const gameConfigString = localStorage.getItem('gameConfig');
     if (gameConfigString) {
       this.gameConfig = JSON.parse(gameConfigString);
       this.currentQuestions = this.gameConfig.questions;
-      
+     
       if (this.currentQuestions.length > 0 && !this.isGameInitialized) {
         this.initializeGame(this.gameConfig);
         this.isGameInitialized = true;
@@ -117,7 +113,6 @@ export class BoardComponent implements OnInit, OnDestroy {
       console.warn("No se encontró configuración de juego. Volviendo al menú.");
       // Opcional: Redirigir al menú si no hay configuración
     }
-
     this.cdr.detectChanges();
 
     // Suscripción a la posición del carro
@@ -129,9 +124,12 @@ export class BoardComponent implements OnInit, OnDestroy {
 
   // Método para manejar el estado de marcado visual
   private updateMarkingVisualState(): void {
-    // Actualizar isMarkingVisual basado en tu lógica de marcado
-    // Por ejemplo, si tienes un array de movimientos que incluye 'mark'
-    this.isMarkingVisual = this.moveSequence.includes('mark') && !this.moveSequence.includes('finish');
+    // Actualizar isMarkingVisual basado en si hay un 'mark' sin su correspondiente 'finish'
+    const lastMarkIndex = this.moveSequence.lastIndexOf('mark');
+    const lastFinishIndex = this.moveSequence.lastIndexOf('finish');
+    
+    // Si hay un 'mark' más reciente que el último 'finish', entonces está marcando
+    this.isMarkingVisual = lastMarkIndex > lastFinishIndex || (lastMarkIndex !== -1 && lastFinishIndex === -1);
   }
 
   // initializeGame ahora recibe la configuración completa del puzzle
@@ -140,16 +138,17 @@ export class BoardComponent implements OnInit, OnDestroy {
     this.isMarking = false;
     this.markedPath = [];
     this.errorPath = [];
+    this.isMarkingVisual = false;
     this.assignAnswerColors();
-    
+   
     // Usa el tamaño del puzzle, no de la dificultad
     this.initializeBoard(config.rows, config.cols);
     this.resetTimer(config.difficulty);
-    
+   
     this.isGameOver = false;
     this.showWinMenu = false;
     this.finalScore = 0;
-    
+   
     // Límite de pasos según la dificultad del puzzle
     switch (config.difficulty) {
       case 'facil':
@@ -168,7 +167,7 @@ export class BoardComponent implements OnInit, OnDestroy {
         this.steps = 100;
         this.maxSteps = 100;
     }
-    
+   
     this.unlockKeyboard();
     this.startTimer();
   }
@@ -205,7 +204,6 @@ export class BoardComponent implements OnInit, OnDestroy {
       console.warn("No hay respuestas para colocar en el tablero.");
       return;
     }
-
     this.board = Array(rows).fill(null).map(() => Array(cols).fill(''));
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < cols; j++) {
@@ -264,7 +262,7 @@ export class BoardComponent implements OnInit, OnDestroy {
 
     for (let i = 0; i < answer.length; i++) {
       let r = startRow, c = startCol;
-      
+     
       if (orientation === 0) { // Horizontal
         c += i;
       } else if (orientation === 1) { // Vertical
@@ -278,7 +276,7 @@ export class BoardComponent implements OnInit, OnDestroy {
         possible = false;
         break;
       }
-      
+     
       const posKey = `${r},${c}`;
       if (occupiedPositions.has(posKey) && this.board[r][c] !== answer[i]) {
         possible = false;
@@ -352,6 +350,7 @@ export class BoardComponent implements OnInit, OnDestroy {
 
   moveCar(direction: 'up' | 'down' | 'left' | 'right'): void {
     if (this.isGameOver || !this.board.length) return;
+
     const newPos = { ...this.carPosition };
     switch (direction) {
       case 'up': if (newPos.row > 0) newPos.row--; break;
@@ -359,6 +358,7 @@ export class BoardComponent implements OnInit, OnDestroy {
       case 'left': if (newPos.col > 0) newPos.col--; break;
       case 'right': if (newPos.col < this.board[0].length - 1) newPos.col++; break;
     }
+
     if (newPos.row !== this.carPosition.row || newPos.col !== this.carPosition.col) {
       this.gameService.updateCarPosition(newPos.row, newPos.col);
     }
@@ -384,7 +384,7 @@ export class BoardComponent implements OnInit, OnDestroy {
       this.timerInterval = null;
     }
     this.isGameInitialized = false;
-    
+   
     if (this.gameConfig) {
       // Resetear el progreso de las preguntas
       this.currentQuestions.forEach(q => {
@@ -417,50 +417,62 @@ export class BoardComponent implements OnInit, OnDestroy {
       if (direction === 'finish' && !this.isMarking) return; // No finalizar si no está marcando
 
       this.moveSequence.push(direction);
+     
+      if (direction === 'mark') {
+        this.isMarking = true;
+      }
+      if (direction === 'finish') {
+        this.isMarking = false;
+      }
       
-      if (direction === 'mark') this.isMarking = true;
-      if (direction === 'finish') this.isMarking = false;
+      // Actualizar el estado visual después de cada cambio
+      this.updateMarkingVisualState();
     }
-
-    
-
   }
 
   clearMoveSequence() {
     this.moveSequence = [];
-    this.isMarking = false; // Resetea el estado de marcado también
+    this.isMarking = false;
+    this.isMarkingVisual = false; // Resetear también el estado visual
   }
 
   async sendMoveSequence() {
     this.lockKeyboard();
     let isCurrentlyMarking = false;
-    let localMarkedPath: {row: number, col: number}[] = [];
-    let localMarkedWord = '';
+    let currentWordPath: {row: number, col: number}[] = [];
+    let currentWord = '';
+    let allWordsFound: Array<{word: string, path: {row: number, col: number}[]}> = [];
 
     for (const move of this.moveSequence) {
       if (this.steps <= 0) break;
 
       if (move === 'mark') {
         isCurrentlyMarking = true;
-        // La posición actual del carro es el inicio de la palabra
-        localMarkedPath.push({ ...this.carPosition });
-        localMarkedWord += this.board[this.carPosition.row][this.carPosition.col];
+        // Iniciar nueva palabra
+        currentWordPath = [{ ...this.carPosition }];
+        currentWord = this.board[this.carPosition.row][this.carPosition.col];
         this.markedPath.push({ ...this.carPosition }); // Para feedback visual
         continue;
       }
 
       if (move === 'finish') {
         isCurrentlyMarking = false;
-        break; // Termina la secuencia de movimientos, procede a la validación
+        // Finalizar palabra actual
+        if (currentWord) {
+          allWordsFound.push({ word: currentWord, path: [...currentWordPath] });
+          currentWordPath = [];
+          currentWord = '';
+        }
+        continue;
       }
 
       // Si es un movimiento normal
       this.moveCar(move);
       this.steps--;
-
+      
       if (isCurrentlyMarking) {
-        localMarkedPath.push({ ...this.carPosition });
-        localMarkedWord += this.board[this.carPosition.row][this.carPosition.col];
+        currentWordPath.push({ ...this.carPosition });
+        currentWord += this.board[this.carPosition.row][this.carPosition.col];
         this.markedPath.push({ ...this.carPosition }); // Para feedback visual
       }
 
@@ -468,26 +480,41 @@ export class BoardComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     }
 
-    // Validación al final de la secuencia
-    if (localMarkedWord) {
-      const questionFound = this.currentQuestions.find(q => !q.isFound && q.answer === localMarkedWord);
+    // Si quedó una palabra sin finalizar (el usuario no puso 'finish' al final)
+    if (isCurrentlyMarking && currentWord) {
+      allWordsFound.push({ word: currentWord, path: [...currentWordPath] });
+    }
 
+    // Validación de todas las palabras encontradas
+    let allWordsCorrect = true;
+    let wordsFoundInThisSequence = 0;
+
+    for (const wordData of allWordsFound) {
+      const questionFound = this.currentQuestions.find(q => !q.isFound && q.answer === wordData.word);
       if (questionFound) {
         // Palabra correcta
-        this.markAnswerAsFound(questionFound, localMarkedPath);
+        this.markAnswerAsFound(questionFound, wordData.path);
+        wordsFoundInThisSequence++;
       } else {
-        // Palabra incorrecta, marcar error y terminar juego
-        this.errorPath = [...localMarkedPath];
-        this.isGameOver = true;
-        this.cdr.detectChanges();
-        await new Promise(res => setTimeout(res, 1500)); // Espera para mostrar el error
-        this.resetGame();
+        // Palabra incorrecta
+        allWordsCorrect = false;
+        this.errorPath = [...wordData.path];
+        break;
       }
+    }
+
+    // Si alguna palabra fue incorrecta, terminar el juego
+    if (!allWordsCorrect) {
+      this.isGameOver = true;
+      this.cdr.detectChanges();
+      await new Promise(res => setTimeout(res, 1500)); // Espera para mostrar el error
+      this.resetGame();
     }
 
     this.clearMoveSequence();
     this.markedPath = [];
     this.unlockKeyboard();
+    this.updateMarkingVisualState(); // Actualizar estado visual al final
 
     if (this.steps === 0 && !this.isGameOver) {
       this.isGameOver = true;
@@ -502,10 +529,10 @@ export class BoardComponent implements OnInit, OnDestroy {
     if (questionIndex === -1 || this.currentQuestions[questionIndex].isFound) return;
 
     this.currentQuestions[questionIndex].isFound = true;
-    
+   
     path.forEach((pos, index) => {
       this.questionService.markLetterFound(question.id, index);
-      
+     
       const alreadyInFound = this.foundPositions.some(fp => fp.row === pos.row && fp.col === pos.col);
       if (!alreadyInFound) {
         this.foundPositions.push({
@@ -525,7 +552,7 @@ export class BoardComponent implements OnInit, OnDestroy {
       this.isGameOver = true;
       if (this.timerInterval) clearInterval(this.timerInterval);
     }
-    
+   
     this.cdr.detectChanges();
   }
 
@@ -535,7 +562,7 @@ export class BoardComponent implements OnInit, OnDestroy {
       alert('Debes iniciar sesión para enviar tu puntaje.');
       return;
     }
-    
+   
     fetch('http://localhost:8000/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
