@@ -88,7 +88,6 @@
             <div class="move-buttons">
                 <button type="button" class="btn-up" (click)="addMove('up')">↑</button>
                 <button type="button" class="btn-left" (click)="addMove('left')">←</button>
-                <!-- Corregido: [disabled] apunta a isMarkingVisual -->
                 <button type="button" class="btn-mark" (click)="addMove('mark')" [disabled]="isMarkingVisual" title="Empezar a marcar (Espacio)">MARCAR</button>
                 <button type="button" class="btn-right" (click)="addMove('right')">→</button>
                 <button type="button" class="btn-down" (click)="addMove('down')">↓</button>

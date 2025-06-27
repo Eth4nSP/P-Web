@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-// Estructuras de datos actualizadas
 export interface Question {
   id: string;
   question: string;
@@ -18,10 +17,9 @@ export interface Puzzle {
   rows: number;
   cols: number;
   questions: Question[];
-  isCustom?: boolean; // Para diferenciar puzzles personalizados
+  isCustom?: boolean; 
 }
 
-// Estructura para compatibilidad con el sistema anterior
 type QuestionsData = {
   facil: Question[];
   medio: Question[];
@@ -32,11 +30,9 @@ type QuestionsData = {
   providedIn: 'root'
 })
 export class QuestionService {
-  // El BehaviorSubject ahora manejará un array de Puzzles
   private puzzlesSubject = new BehaviorSubject<Puzzle[]>([]);
   private currentQuestionsSubject = new BehaviorSubject<Question[]>([]);
  
-  // Para compatibilidad con el sistema anterior
   private questionsSubject = new BehaviorSubject<QuestionsData>({ facil: [], medio: [], dificil: [] });
 
   constructor() {
@@ -44,18 +40,15 @@ export class QuestionService {
     this.loadTraditionalQuestionsFromStorage();
   }
 
-  // ---- MÉTODOS PARA MANEJAR PUZZLES ----
 
   getPuzzles(): Observable<Puzzle[]> {
     return this.puzzlesSubject.asObservable();
   }
 
-  // Obtener puzzles predefinidos (niveles del sistema)
   getDefaultPuzzles(): Puzzle[] {
     return this.puzzlesSubject.value.filter(p => !p.isCustom);
   }
 
-  // Obtener puzzles personalizados del usuario
   getCustomPuzzles(): Puzzle[] {
     return this.puzzlesSubject.value.filter(p => p.isCustom);
   }
@@ -64,15 +57,12 @@ export class QuestionService {
     return this.puzzlesSubject.value.find(p => p.id === id);
   }
 
-  // Método para crear puzzles personalizados
   addCustomPuzzle(name: string, difficulty: 'facil' | 'medio' | 'dificil', rows: number, cols: number): { success: boolean; error?: string; id?: string } {
-    // Validaciones de tamaño según dificultad
     const validationResult = this.validatePuzzleSize(difficulty, rows, cols);
     if (!validationResult.isValid) {
       return { success: false, error: validationResult.error };
     }
 
-    // Validar que el nombre no esté vacío
     if (!name.trim()) {
       return { success: false, error: 'El nombre del puzzle es requerido' };
     }
@@ -95,7 +85,6 @@ export class QuestionService {
     return { success: true, id: newPuzzle.id };
   }
 
-  // Método para validar tamaños de puzzle según dificultad
   validatePuzzleSize(difficulty: 'facil' | 'medio' | 'dificil', rows: number, cols: number): { isValid: boolean; error?: string } {
     switch (difficulty) {
       case 'facil':
@@ -126,7 +115,6 @@ export class QuestionService {
     return { isValid: true };
   }
 
-  // Método para agregar puzzles del sistema (niveles predefinidos)
   addSystemPuzzle(name: string, difficulty: 'facil' | 'medio' | 'dificil', rows: number, cols: number): string {
     const newPuzzle: Puzzle = {
       id: this.generateId(),
@@ -161,7 +149,6 @@ export class QuestionService {
       return { success: false, error: 'Puzzle no encontrado' };
     }
 
-    // Si es un puzzle personalizado, validar tamaño
     if (puzzles[puzzleIndex].isCustom) {
       const validationResult = this.validatePuzzleSize(difficulty, rows, cols);
       if (!validationResult.isValid) {
@@ -180,7 +167,6 @@ export class QuestionService {
     return { success: true };
   }
 
-  // ---- MÉTODOS PARA MANEJAR PREGUNTAS DENTRO DE UN PUZZLE ----
 
   addQuestionToPuzzle(puzzleId: string, question: string, answer: string): void {
     const puzzles = this.puzzlesSubject.value;
@@ -232,7 +218,6 @@ export class QuestionService {
     }
   }
 
-  // ---- MÉTODOS PARA COMPATIBILIDAD CON EL SISTEMA ANTERIOR DE PREGUNTAS ----
 
   getQuestions(): Observable<QuestionsData> {
     return this.questionsSubject.asObservable();
@@ -258,7 +243,6 @@ export class QuestionService {
     const currentData = this.questionsSubject.value;
     let found = false;
 
-    // Buscar en todas las dificultades
     for (const difficulty of ['facil', 'medio', 'dificil'] as const) {
       const questionIndex = currentData[difficulty].findIndex(q => q.id === questionId);
       if (questionIndex !== -1) {
@@ -280,7 +264,6 @@ export class QuestionService {
     const currentData = this.questionsSubject.value;
     let found = false;
 
-    // Buscar y eliminar en todas las dificultades
     for (const difficulty of ['facil', 'medio', 'dificil'] as const) {
       const questionIndex = currentData[difficulty].findIndex(q => q.id === questionId);
       if (questionIndex !== -1) {
@@ -310,13 +293,11 @@ export class QuestionService {
     try {
       const data = JSON.parse(jsonData);
 
-      // Importar preguntas tradicionales si existen
       if (data.traditionalQuestions) {
         this.questionsSubject.next(data.traditionalQuestions);
         this.saveTraditionalQuestionsToStorage();
       }
 
-      // Importar puzzles si existen
       if (data.puzzles && Array.isArray(data.puzzles)) {
         this.puzzlesSubject.next(data.puzzles);
         this.savePuzzlesToStorage();
@@ -334,7 +315,6 @@ export class QuestionService {
     this.saveTraditionalQuestionsToStorage();
   }
 
-  // ---- MÉTODOS PARA EL JUEGO ----
 
   loadGameConfig(puzzleId: string): void {
     const puzzle = this.getPuzzleById(puzzleId);
@@ -362,11 +342,9 @@ export class QuestionService {
     this.currentQuestionsSubject.next(gameConfig.questions);
   }
 
-  // NUEVO MÉTODO: Cargar configuración del juego según dificultad del sistema
   loadSystemGameConfig(difficulty: string): void {
     const difficultyTyped = difficulty as 'facil' | 'medio' | 'dificil';
     
-    // Definir configuraciones por dificultad
     const systemConfigs = {
       facil: {
         rows: 8,
@@ -413,7 +391,6 @@ export class QuestionService {
       return;
     }
 
-    // Crear preguntas con la estructura correcta
     const questions: Question[] = config.questions.map((q, index) => ({
       id: `system-${difficulty}-${index}`,
       question: q.question,
@@ -493,7 +470,6 @@ export class QuestionService {
     return this.currentQuestionsSubject.value.map(q => q.answer);
   }
 
-  // ---- MÉTODOS PRIVADOS ----
 
   private savePuzzlesToStorage(): void {
     localStorage.setItem('wordSearchPuzzles', JSON.stringify(this.puzzlesSubject.value));
@@ -621,7 +597,6 @@ export class QuestionService {
   }
 
   clearAllPuzzles(): void {
-    // Solo limpiar puzzles personalizados, mantener los del sistema
     const puzzles = this.puzzlesSubject.value;
     const systemPuzzles = puzzles.filter(p => !p.isCustom);
     this.puzzlesSubject.next(systemPuzzles);

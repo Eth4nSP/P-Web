@@ -2,7 +2,6 @@
 
 <div class="container">
     <div class="menu-logo">
-        <!-- Minecraft pixel art logo SVG -->
         <svg width="54" height="38" viewBox="0 0 54 38" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="2" y="26" width="50" height="10" rx="2" fill="#3e5227" stroke="#b6e53e" stroke-width="2"/>
             <rect x="8" y="8" width="38" height="20" rx="4" fill="#b6e53e" stroke="#3e5227" stroke-width="2"/>
@@ -19,12 +18,10 @@
             <li style="position: relative;">
                 <button (click)="onPlay()">Jugar</button>
                
-                <!-- Menú de puzzles mejorado -->
                 <div class="difficulty-menu" *ngIf="showPuzzleMenu">
                     <div class="difficulty-menu-content">
                         <h2>Elige un Puzzle</h2>
                        
-                        <!-- Botones para cambiar entre tipos de puzzles -->
                         <div class="puzzle-type-buttons">
                             <button
                                 (click)="showSystemLevels()"
@@ -40,7 +37,6 @@
                             </button>
                         </div>
 
-                        <!-- Selección de Dificultad del Sistema -->
                         <div *ngIf="showDifficultySelection" class="puzzle-section">
                             <h3>🎮 Selecciona Dificultad</h3>
                             <button
@@ -55,16 +51,13 @@
                             </button>
                         </div>
 
-                        <!-- Puzzles Personalizados -->
                         <div *ngIf="showCustomPuzzles" class="puzzle-section">
                             <h3>🎨 Tus Puzzles Personalizados</h3>
                            
-                            <!-- Botón para crear nuevo puzzle -->
                             <button (click)="goToCreateCustomPuzzle()" class="create-puzzle-btn">
                                 ➕ Crear Nuevo Puzzle
                             </button>
 
-                            <!-- Lista de puzzles personalizados -->
                             <ng-container *ngIf="customPuzzles.length > 0; else noCustomPuzzles">
                                 <button
                                     *ngFor="let puzzle of customPuzzles"
@@ -101,7 +94,6 @@
     </nav>
 </div>
 
-<!-- Cinemática Modal -->
 <div class="cinematic-modal" *ngIf="showTutorial">
     <div class="cinematic-bg" [ngStyle]="{'background-image': 'url(' + tutorialBg + ')'}"></div>
     <div class="cinematic-content">

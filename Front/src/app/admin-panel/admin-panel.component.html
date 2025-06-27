@@ -7,7 +7,6 @@
         </div>
     </div>
 
-    <!-- Selector de Vista -->
     <div class="view-selector">
         <button 
             (click)="switchView('puzzles')" 
@@ -23,21 +22,17 @@
         </button>
     </div>
 
-    <!-- VISTA DE GESTIÓN DE PUZZLES -->
     <div *ngIf="activeView === 'puzzles'" class="puzzles-view">
         
-        <!-- Sección de Crear Puzzle -->
         <div class="puzzle-creation-section">
             <h2>🧩 Crear Nuevo Puzzle</h2>
             
-            <!-- Mostrar formulario de creación -->
             <div *ngIf="!isCreatingPuzzle && !editingPuzzle" class="create-puzzle-prompt">
                 <button (click)="startCreatingPuzzle()" class="btn btn-create-puzzle">
                     ➕ Crear Nuevo Puzzle Personalizado
                 </button>
             </div>
 
-            <!-- Formulario de creación/edición de puzzle -->
             <div *ngIf="isCreatingPuzzle || editingPuzzle" class="puzzle-form">
                 <div class="form-container">
                     <div class="form-group">
@@ -113,7 +108,6 @@
             </div>
         </div>
 
-        <!-- Lista de Puzzles Existentes -->
         <div class="puzzles-list-section">
             <h2>🎮 Puzzles Existentes</h2>
             
@@ -168,11 +162,9 @@
             </div>
         </div>
 
-        <!-- Sección de Preguntas del Puzzle Seleccionado -->
         <div *ngIf="editingPuzzle" class="puzzle-questions-section">
             <h2>📝 Preguntas para: {{ editingPuzzle.name }}</h2>
             
-            <!-- Formulario para agregar preguntas al puzzle -->
             <div class="question-form">
                 <h3>➕ Agregar Nueva Pregunta</h3>
                 <div class="form-container">
@@ -222,7 +214,6 @@
                 </div>
             </div>
 
-            <!-- Lista de preguntas del puzzle actual -->
             <div class="puzzle-questions-list">
                 <h3>📋 Preguntas del Puzzle ({{ editingPuzzle.questions.length }})</h3>
                 
@@ -272,9 +263,7 @@
         </div>
     </div>
 
-    <!-- VISTA DE PREGUNTAS TRADICIONALES -->
     <div *ngIf="activeView === 'traditional'" class="traditional-view">
-        <!-- Formulario para agregar preguntas tradicionales -->
         <div class="question-form-section">
             <h2>➕ Agregar Nueva Pregunta Tradicional</h2>
             <div class="form-container">
@@ -328,7 +317,6 @@
             </div>
         </div>
 
-        <!-- Lista de preguntas por dificultad -->
         <div class="questions-list-section">
             <h2>📋 Preguntas Tradicionales Registradas</h2>
             <div class="difficulty-tabs">
@@ -354,7 +342,6 @@
                             </span>
                         </div>
 
-                        <!-- Modo vista -->
                         <div *ngIf="editingId !== question.id" class="question-content">
                             <div class="question-text">
                                 <strong>❓ Pregunta:</strong>
@@ -366,7 +353,6 @@
                             </div>
                         </div>
 
-                        <!-- Modo edición -->
                         <div *ngIf="editingId === question.id" class="question-edit">
                             <div class="form-group">
                                 <label>Pregunta:</label>
@@ -386,7 +372,6 @@
                             </div>
                         </div>
 
-                        <!-- Acciones -->
                         <div class="question-actions">
                             <div *ngIf="editingId !== question.id">
                                 <button (click)="startEdit(question)" class="btn btn-edit">
@@ -417,7 +402,6 @@
         </div>
     </div>
 
-    <!-- Herramientas adicionales -->
     <div class="tools-section">
         <h2>🔧 Herramientas</h2>
         <div class="tools-grid">
@@ -433,7 +417,6 @@
         </div>
     </div>
 
-    <!-- Modal de confirmación -->
     <div *ngIf="showDeleteConfirm" class="modal-overlay" (click)="cancelDelete()">
         <div class="modal-content" (click)="$event.stopPropagation()">
             <h3>⚠️ Confirmar Eliminación</h3>

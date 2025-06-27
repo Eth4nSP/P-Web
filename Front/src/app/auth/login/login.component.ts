@@ -28,8 +28,7 @@ export class LoginComponent {
       next: (res) => {
         if (res && res.id) {
           localStorage.setItem('userId', String(res.id));
-          // Aquí puedes redirigir o mostrar éxito
-          window.location.href = '/'; // Redirigir a la página principal
+          window.location.href = '/'; 
         } else {
           this.error = 'Credenciales incorrectas';
         }

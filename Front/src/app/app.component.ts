@@ -17,7 +17,6 @@ export class AppComponent {
 
   logout() {
     localStorage.removeItem('userId');
-    // Opcional: redirigir a inicio o login
   }
 }
 

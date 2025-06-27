@@ -7,7 +7,7 @@ interface Score {
   id: number;
   user_name: string;
   score: number;
-  posicion: number; // agregamos la propiedad posicion
+  posicion: number; 
 }
 
 @Component({
@@ -30,7 +30,6 @@ export class PuntajeComponent {
   fetchScores() {
     this.loading = true;
     this.http.get<Score[]>(`http://localhost:8000/index`).subscribe(scores => {
-      // En caso que no venga posicion, la asignamos según índice
       this.scores = scores.map((s, i) => ({
         ...s,
         posicion: s.posicion ?? i + 1,

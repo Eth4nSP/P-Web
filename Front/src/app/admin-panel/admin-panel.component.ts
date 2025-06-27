@@ -13,14 +13,11 @@ import { QuestionService, Question, Puzzle } from '../services/question.service'
   imports: [CommonModule, FormsModule, RouterModule]
 })
 export class AdminPanelComponent implements OnInit {
-  // Control de vistas
   activeView: 'puzzles' | 'traditional' = 'puzzles';
   
-  // Observables
   puzzles$!: Observable<Puzzle[]>;
   questions$!: Observable<{facil: Question[], medio: Question[], dificil: Question[]}>;
   
-  // Variables para puzzles
   isCreatingPuzzle = false;
   editingPuzzle: Puzzle | null = null;
   newPuzzleName = '';
@@ -28,26 +25,21 @@ export class AdminPanelComponent implements OnInit {
   newPuzzleRows = 5;
   newPuzzleCols = 5;
   
-  // Variables para preguntas de puzzles
   puzzleQuestion = '';
   puzzleAnswer = '';
   
-  // Variables para preguntas tradicionales
   selectedDifficulty: 'facil' | 'medio' | 'dificil' = 'facil';
   newQuestion = '';
   newAnswer = '';
   
-  // Variables para edición de preguntas tradicionales
   editingId: string | null = null;
   editQuestion = '';
   editAnswer = '';
   
-  // Control de tabs y confirmaciones
   activeTab: 'facil' | 'medio' | 'dificil' = 'facil';
   showDeleteConfirm = false;
   questionToDelete: Question | null = null;
   
-  // Datos de dificultades
   difficulties = [
     { key: 'facil' as const, label: 'Fácil', icon: '🟢' },
     { key: 'medio' as const, label: 'Medio', icon: '🟡' },
@@ -59,17 +51,15 @@ export class AdminPanelComponent implements OnInit {
   ngOnInit(): void {
     this.puzzles$ = this.questionService.getPuzzles();
     this.questions$ = this.questionService.getQuestions();
-    this.onDifficultyChange(); // Establecer tamaños iniciales
+    this.onDifficultyChange(); 
   }
 
-  // MÉTODOS DE CONTROL DE VISTAS
   switchView(view: 'puzzles' | 'traditional'): void {
     this.activeView = view;
     this.resetAllForms();
   }
 
   private resetAllForms(): void {
-    // Reset puzzle forms
     this.isCreatingPuzzle = false;
     this.editingPuzzle = null;
     this.newPuzzleName = '';
@@ -79,7 +69,6 @@ export class AdminPanelComponent implements OnInit {
     this.puzzleQuestion = '';
     this.puzzleAnswer = '';
     
-    // Reset traditional forms
     this.newQuestion = '';
     this.newAnswer = '';
     this.editingId = null;
@@ -89,7 +78,6 @@ export class AdminPanelComponent implements OnInit {
     this.questionToDelete = null;
   }
 
-  // MÉTODOS PARA GESTIÓN DE PUZZLES
   startCreatingPuzzle(): void {
     this.isCreatingPuzzle = true;
     this.editingPuzzle = null;
@@ -118,7 +106,6 @@ export class AdminPanelComponent implements OnInit {
     if (!this.canCreatePuzzle()) return;
 
     if (this.isCreatingPuzzle) {
-      // Crear nuevo puzzle
       const result = this.questionService.addCustomPuzzle(
         this.newPuzzleName,
         this.newPuzzleDifficulty,
@@ -127,7 +114,6 @@ export class AdminPanelComponent implements OnInit {
       );
 
       if (result.success && result.id) {
-        // Cargar el puzzle recién creado para editarlo
         const newPuzzle = this.questionService.getPuzzleById(result.id);
         if (newPuzzle) {
           this.editingPuzzle = newPuzzle;
@@ -137,7 +123,6 @@ export class AdminPanelComponent implements OnInit {
         alert('Error al crear el puzzle: ' + (result.error || 'Error desconocido'));
       }
     } else if (this.editingPuzzle) {
-      // Actualizar puzzle existente
       const result = this.questionService.editPuzzle(
         this.editingPuzzle.id,
         this.newPuzzleName,
@@ -147,7 +132,6 @@ export class AdminPanelComponent implements OnInit {
       );
 
       if (result.success) {
-        // Actualizar la referencia del puzzle editado
         const updatedPuzzle = this.questionService.getPuzzleById(this.editingPuzzle.id);
         if (updatedPuzzle) {
           this.editingPuzzle = updatedPuzzle;
@@ -194,7 +178,6 @@ export class AdminPanelComponent implements OnInit {
     }
   }
 
-  // MÉTODOS PARA PREGUNTAS DE PUZZLES
   addQuestionToSelectedPuzzle(): void {
     if (!this.editingPuzzle || !this.canAddQuestionToPuzzle()) return;
 
@@ -204,7 +187,6 @@ export class AdminPanelComponent implements OnInit {
       this.puzzleAnswer
     );
 
-    // Actualizar la referencia del puzzle
     const updatedPuzzle = this.questionService.getPuzzleById(this.editingPuzzle.id);
     if (updatedPuzzle) {
       this.editingPuzzle = updatedPuzzle;
@@ -227,7 +209,6 @@ export class AdminPanelComponent implements OnInit {
     if (confirm('¿Estás seguro de que quieres eliminar esta pregunta?')) {
       this.questionService.deleteQuestionFromPuzzle(this.editingPuzzle.id, questionId);
       
-      // Actualizar la referencia del puzzle
       const updatedPuzzle = this.questionService.getPuzzleById(this.editingPuzzle.id);
       if (updatedPuzzle) {
         this.editingPuzzle = updatedPuzzle;
@@ -245,7 +226,6 @@ export class AdminPanelComponent implements OnInit {
     return Math.min(this.editingPuzzle.rows, this.editingPuzzle.cols);
   }
 
-  // MÉTODOS PARA PREGUNTAS TRADICIONALES
   addQuestion(): void {
     if (!this.canAddQuestion()) return;
 
@@ -303,7 +283,6 @@ export class AdminPanelComponent implements OnInit {
     this.questionToDelete = null;
   }
 
-  // MÉTODOS DE UTILIDAD
   onDifficultyChange(): void {
     const sizes = this.getSizeRange();
     this.newPuzzleRows = sizes.min;
@@ -361,7 +340,6 @@ export class AdminPanelComponent implements OnInit {
     return count;
   }
 
-  // MÉTODOS DE HERRAMIENTAS
   exportQuestions(): void {
     const data = this.questionService.exportQuestions();
     const blob = new Blob([data], { type: 'application/json' });

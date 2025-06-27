@@ -40,7 +40,6 @@
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
-/* Estilos responsivos para celdas */
 @media (max-width: 768px) {
   .cell {
     width: 35px !important;
@@ -77,12 +76,12 @@
   }
 
   .marked-letter {
-    background-color: rgba(243, 156, 18, 0.4); // Naranja semitransparente
+    background-color: rgba(243, 156, 18, 0.4); 
     border-color: #f39c12;
 }
 
 .error-letter {
-    background-color: #e74c3c !important; // Rojo fuerte
+    background-color: #e74c3c !important; 
     color: white;
     animation: shake 0.5s;
 }
