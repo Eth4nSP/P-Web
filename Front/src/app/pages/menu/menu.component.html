@@ -1,0 +1,114 @@
+<div class="bg-particles"></div>
+
+<div class="container">
+    <div class="menu-logo">
+        <svg width="54" height="38" viewBox="0 0 54 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="26" width="50" height="10" rx="2" fill="#3e5227" stroke="#b6e53e" stroke-width="2"/>
+            <rect x="8" y="8" width="38" height="20" rx="4" fill="#b6e53e" stroke="#3e5227" stroke-width="2"/>
+            <rect x="14" y="14" width="26" height="8" rx="2" fill="#fff" stroke="#3e5227" stroke-width="1.5"/>
+            <rect x="20" y="18" width="14" height="4" rx="1.5" fill="#3e5227"/>
+            <rect x="10" y="32" width="8" height="4" rx="2" fill="#222"/>
+            <rect x="36" y="32" width="8" height="4" rx="2" fill="#222"/>
+        </svg>
+    </div>
+
+    <nav class="menu">
+        <h1>Juego "Sopa de Letras"</h1>
+        <ul>
+            <li style="position: relative;">
+                <button (click)="onPlay()">Jugar</button>
+               
+                <div class="difficulty-menu" *ngIf="showPuzzleMenu">
+                    <div class="difficulty-menu-content">
+                        <h2>Elige un Puzzle</h2>
+                       
+                        <div class="puzzle-type-buttons">
+                            <button
+                                (click)="showSystemLevels()"
+                                [class.active]="showDifficultySelection"
+                                class="type-btn">
+                                🎮 Niveles del Sistema
+                            </button>
+                            <button
+                                (click)="showCustomCreatedPuzzles()"
+                                [class.active]="showCustomPuzzles"
+                                class="type-btn">
+                                🎨 Puzzles Creados
+                            </button>
+                        </div>
+
+                        <div *ngIf="showDifficultySelection" class="puzzle-section">
+                            <h3>🎮 Selecciona Dificultad</h3>
+                            <button
+                                *ngFor="let difficulty of systemDifficulties"
+                                (click)="selectSystemDifficulty(difficulty.id)"
+                                class="puzzle-option system-difficulty">
+                                <div class="puzzle-info">
+                                    <span class="puzzle-name">{{ difficulty.name }}</span>
+                                    <span class="puzzle-difficulty">{{ difficulty.icon }}</span>
+                                    <span class="puzzle-description">{{ difficulty.description }}</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div *ngIf="showCustomPuzzles" class="puzzle-section">
+                            <h3>🎨 Tus Puzzles Personalizados</h3>
+                           
+                            <button (click)="goToCreateCustomPuzzle()" class="create-puzzle-btn">
+                                ➕ Crear Nuevo Puzzle
+                            </button>
+
+                            <ng-container *ngIf="customPuzzles.length > 0; else noCustomPuzzles">
+                                <button
+                                    *ngFor="let puzzle of customPuzzles"
+                                    (click)="selectCustomPuzzle(puzzle.id)"
+                                    class="puzzle-option custom-puzzle">
+                                    <div class="puzzle-info">
+                                        <span class="puzzle-name">{{ puzzle.name }}</span>
+                                        <span class="puzzle-type">{{ getPuzzleTypeLabel(puzzle) }}</span>
+                                        <span class="puzzle-difficulty">
+                                            {{ getDifficultyIcon(puzzle.difficulty) }}
+                                            {{ getDifficultyLabel(puzzle.difficulty) }}
+                                        </span>
+                                        <span class="puzzle-size">{{ getPuzzleSize(puzzle) }}</span>
+                                        <span class="puzzle-questions">{{ getQuestionCount(puzzle) }} preguntas</span>
+                                    </div>
+                                </button>
+                            </ng-container>
+                           
+                            <ng-template #noCustomPuzzles>
+                                <div class="empty-custom-puzzles">
+                                    <p>🎨 No tienes puzzles personalizados aún.</p>
+                                    <p>¡Crea tu primer puzzle personalizado!</p>
+                                </div>
+                            </ng-template>
+                        </div>
+
+                        <button (click)="closePuzzleMenu()" class="cancel-btn">Cancelar</button>
+                    </div>
+                </div>
+            </li>
+            <li><button (click)="scoreboard()">Puntaje</button></li>
+            <li><button (click)="router.navigate(['/admin'])">Admin</button></li>
+        </ul>
+    </nav>
+</div>
+
+<div class="cinematic-modal" *ngIf="showTutorial">
+    <div class="cinematic-bg" [ngStyle]="{'background-image': 'url(' + tutorialBg + ')'}"></div>
+    <div class="cinematic-content">
+        <h2>¡Bienvenido/a a Lexaria.dev!</h2>
+        <p>
+            Un joven developer absorbido por un glitch dimensional mientras compilaba su proyecto final de carrera.
+            Despierta en Lexaria.dev, un universo olvidado donde cada línea de código tiene peso real y los
+            Lenguajes de Programación son fuerzas elementales.<br><br>            
+            El sistema operativo que gobierna este mundo está corrupto, y el equilibrio del lenguaje ha sido roto
+            por un bug ancestral. Solo encontrando las Palabras Clave en cada región (mapa), podrás reactivar los
+            Glifos Sintácticos que restauran el orden y desbloquean nuevas funciones del sistema.<br><br>
+            Cada mapa representa un entorno de desarrollo místico (como bosques con estructuras de datos, ruinas
+            de lenguajes obsoletos o servidores abandonados).<br>
+            <b>Tu misión:</b> debuggear el mundo y restaurar el código fuente de la realidad.
+        </p>
+        <button (click)="closeCinematicAndShowDifficulty()">Continuar</button>
+    </div>
+</div>

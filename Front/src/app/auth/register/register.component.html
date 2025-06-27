@@ -1,0 +1,13 @@
+<div class="register-bg">
+</div>
+<div class="register-container">
+    <h2>Registro</h2>
+    <form (ngSubmit)="register()" autocomplete="off">
+        <input type="text" placeholder="Nombre" [(ngModel)]="name" name="name" required />
+        <input type="email" placeholder="Email" [(ngModel)]="email" name="email" required />
+        <input type="password" placeholder="Contraseña" [(ngModel)]="password" name="password" required />
+        <button type="submit" [disabled]="loading">Registrarse</button>
+        <div class="register-error" *ngIf="error">{{ error }}</div>
+        <div class="register-success" *ngIf="success">¡Registro exitoso! Ahora puedes iniciar sesión.</div>
+    </form>
+</div>

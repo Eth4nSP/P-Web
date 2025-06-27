@@ -1,0 +1,434 @@
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>🛠️ Panel de Administrador</h1>
+        <div class="admin-actions">
+            <a routerLink="/game" class="btn btn-game">🎮 Ir al Juego</a>
+            <a routerLink="/" class="btn btn-home">🏠 Inicio</a>
+        </div>
+    </div>
+
+    <div class="view-selector">
+        <button 
+            (click)="switchView('puzzles')" 
+            [class.active]="activeView === 'puzzles'"
+            class="view-btn">
+            🧩 Gestión de Puzzles
+        </button>
+        <button 
+            (click)="switchView('traditional')" 
+            [class.active]="activeView === 'traditional'"
+            class="view-btn">
+            📝 Preguntas Tradicionales
+        </button>
+    </div>
+
+    <div *ngIf="activeView === 'puzzles'" class="puzzles-view">
+        
+        <div class="puzzle-creation-section">
+            <h2>🧩 Crear Nuevo Puzzle</h2>
+            
+            <div *ngIf="!isCreatingPuzzle && !editingPuzzle" class="create-puzzle-prompt">
+                <button (click)="startCreatingPuzzle()" class="btn btn-create-puzzle">
+                    ➕ Crear Nuevo Puzzle Personalizado
+                </button>
+            </div>
+
+            <div *ngIf="isCreatingPuzzle || editingPuzzle" class="puzzle-form">
+                <div class="form-container">
+                    <div class="form-group">
+                        <label for="puzzleName">Nombre del Puzzle:</label>
+                        <input 
+                            id="puzzleName" 
+                            type="text" 
+                            [(ngModel)]="newPuzzleName" 
+                            placeholder="Ej: Mi Puzzle de Programación"
+                            class="form-input"
+                            maxlength="50">
+                        <div class="char-counter">{{newPuzzleName.length}}/50</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="puzzleDifficulty">Dificultad:</label>
+                        <select 
+                            id="puzzleDifficulty" 
+                            [(ngModel)]="newPuzzleDifficulty" 
+                            class="form-select"
+                            (change)="onDifficultyChange()">
+                            <option value="facil">🟢 Fácil (5x5 - 8x8)</option>
+                            <option value="medio">🟡 Medio (9x9 - 11x11)</option>
+                            <option value="dificil">🔴 Difícil (12x12 - 15x15)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tamaño del Tablero:</label>
+                        <div class="size-inputs">
+                            <div class="size-input-group">
+                                <label for="puzzleRows">Filas:</label>
+                                <input 
+                                    id="puzzleRows" 
+                                    type="number" 
+                                    [(ngModel)]="newPuzzleRows" 
+                                    [min]="getMinSize()" 
+                                    [max]="getMaxSize()"
+                                    class="form-input size-input">
+                            </div>
+                            <div class="size-input-group">
+                                <label for="puzzleCols">Columnas:</label>
+                                <input 
+                                    id="puzzleCols" 
+                                    type="number" 
+                                    [(ngModel)]="newPuzzleCols" 
+                                    [min]="getMinSize()" 
+                                    [max]="getMaxSize()"
+                                    class="form-input size-input">
+                            </div>
+                        </div>
+                        <div class="size-info">
+                            <small>Rango permitido para {{ getDifficultyLabel(newPuzzleDifficulty) }}: 
+                                {{ getMinSize() }}x{{ getMinSize() }} - {{ getMaxSize() }}x{{ getMaxSize() }}
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button 
+                            (click)="createPuzzle()" 
+                            [disabled]="!canCreatePuzzle()"
+                            class="btn btn-save">
+                            💾 {{ isCreatingPuzzle ? 'Crear Puzzle' : 'Actualizar Puzzle' }}
+                        </button>
+                        <button 
+                            (click)="cancelCreatingPuzzle()" 
+                            class="btn btn-cancel">
+                            ❌ Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="puzzles-list-section">
+            <h2>🎮 Puzzles Existentes</h2>
+            
+            <div class="puzzles-container">
+                <ng-container *ngIf="(puzzles$ | async)?.length; else noPuzzlesCreated">
+                    <div class="puzzles-grid">
+                        <div *ngFor="let puzzle of (puzzles$ | async)" class="puzzle-card">
+                            <div class="puzzle-header">
+                                <span class="puzzle-name">{{ puzzle.name }}</span>
+                                <span class="puzzle-type" [class]="puzzle.isCustom ? 'custom' : 'system'">
+                                    {{ puzzle.isCustom ? '🎨 Personalizado' : '🎮 Sistema' }}
+                                </span>
+                            </div>
+                            
+                            <div class="puzzle-details">
+                                <div class="puzzle-info-row">
+                                    <span class="difficulty-badge" [class]="puzzle.difficulty">
+                                        {{ getDifficultyIcon(puzzle.difficulty) }} {{ getDifficultyLabel(puzzle.difficulty) }}
+                                    </span>
+                                    <span class="puzzle-size">{{ puzzle.rows }}x{{ puzzle.cols }}</span>
+                                </div>
+                                <div class="puzzle-questions-count">
+                                    {{ puzzle.questions.length }} preguntas
+                                </div>
+                            </div>
+
+                            <div class="puzzle-actions">
+                                <button 
+                                    (click)="startEditPuzzle(puzzle)"
+                                    [class.active]="editingPuzzle?.id === puzzle.id"
+                                    class="btn btn-edit">
+                                    {{ editingPuzzle?.id === puzzle.id ? '📝 Editando...' : '✏️ Editar' }}
+                                </button>
+                                <button 
+                                    (click)="deletePuzzle(puzzle.id)"
+                                    class="btn btn-delete"
+                                    [disabled]="!puzzle.isCustom">
+                                    🗑️ Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+                
+                <ng-template #noPuzzlesCreated>
+                    <div class="empty-state">
+                        <div class="empty-icon">🧩</div>
+                        <p>No hay puzzles creados aún.</p>
+                        <p>¡Crea tu primer puzzle personalizado!</p>
+                    </div>
+                </ng-template>
+            </div>
+        </div>
+
+        <div *ngIf="editingPuzzle" class="puzzle-questions-section">
+            <h2>📝 Preguntas para: {{ editingPuzzle.name }}</h2>
+            
+            <div class="question-form">
+                <h3>➕ Agregar Nueva Pregunta</h3>
+                <div class="form-container">
+                    <div class="form-group">
+                        <label for="puzzleQuestion">Pregunta:</label>
+                        <textarea 
+                            id="puzzleQuestion" 
+                            [(ngModel)]="puzzleQuestion"
+                            placeholder="Escribe tu pregunta aquí..."
+                            class="form-textarea"
+                            rows="3"
+                            maxlength="200">
+                        </textarea>
+                        <div class="char-counter">{{puzzleQuestion.length}}/200</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="puzzleAnswer">Respuesta:</label>
+                        <input 
+                            id="puzzleAnswer" 
+                            type="text" 
+                            [(ngModel)]="puzzleAnswer"
+                            placeholder="Respuesta (será convertida a mayúsculas)"
+                            class="form-input"
+                            [maxlength]="getMaxAnswerLength()">
+                        <div class="answer-preview" *ngIf="puzzleAnswer">
+                            Vista previa: <strong>{{puzzleAnswer.toUpperCase()}}</strong>
+                        </div>
+                        <div class="answer-info">
+                            <small>Máximo {{ getMaxAnswerLength() }} caracteres (basado en el tamaño del tablero)</small>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button 
+                            (click)="addQuestionToSelectedPuzzle()" 
+                            [disabled]="!canAddQuestionToPuzzle()"
+                            class="btn btn-add">
+                            ➕ Agregar Pregunta
+                        </button>
+                        <button 
+                            (click)="clearPuzzleQuestionForm()" 
+                            class="btn btn-clear">
+                            🗑️ Limpiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="puzzle-questions-list">
+                <h3>📋 Preguntas del Puzzle ({{ editingPuzzle.questions.length }})</h3>
+                
+                <ng-container *ngIf="editingPuzzle.questions.length > 0; else noQuestionsInPuzzle">
+                    <div class="questions-grid">
+                        <div *ngFor="let question of editingPuzzle.questions; let i = index" class="question-card">
+                            <div class="question-header">
+                                <span class="question-number">#{{i + 1}}</span>
+                                <span class="question-length">{{ question.answer.length }} letras</span>
+                            </div>
+                            
+                            <div class="question-content">
+                                <div class="question-text">
+                                    <strong>❓ Pregunta:</strong>
+                                    <p>{{ question.question }}</p>
+                                </div>
+                                <div class="answer-text">
+                                    <strong>✅ Respuesta:</strong>
+                                    <span class="answer-highlight">{{ question.answer }}</span>
+                                </div>
+                            </div>
+
+                            <div class="question-actions">
+                                <button 
+                                    (click)="deleteQuestionFromPuzzle(question.id)"
+                                    class="btn btn-delete-small">
+                                    🗑️ Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+                
+                <ng-template #noQuestionsInPuzzle>
+                    <div class="empty-questions">
+                        <p>📝 Este puzzle no tiene preguntas aún.</p>
+                        <p>¡Agrega la primera pregunta usando el formulario de arriba!</p>
+                    </div>
+                </ng-template>
+            </div>
+
+            <div class="puzzle-actions-bottom">
+                <button (click)="stopEditingPuzzle()" class="btn btn-done">
+                    ✅ Terminar Edición
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="activeView === 'traditional'" class="traditional-view">
+        <div class="question-form-section">
+            <h2>➕ Agregar Nueva Pregunta Tradicional</h2>
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="difficulty">Dificultad:</label>
+                    <select id="difficulty" [(ngModel)]="selectedDifficulty" class="form-select">
+                        <option value="facil">🟢 Fácil</option>
+                        <option value="medio">🟡 Medio</option>
+                        <option value="dificil">🔴 Difícil</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="question">Pregunta:</label>
+                    <textarea 
+                        id="question" 
+                        [(ngModel)]="newQuestion"
+                        placeholder="Escribe tu pregunta aquí..."
+                        class="form-textarea"
+                        rows="3"
+                        maxlength="200">
+                    </textarea>
+                    <div class="char-counter">{{newQuestion.length}}/200</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="answer">Respuesta:</label>
+                    <input 
+                        id="answer" 
+                        type="text" 
+                        [(ngModel)]="newAnswer"
+                        placeholder="Respuesta (será convertida a mayúsculas)"
+                        class="form-input"
+                        maxlength="20">
+                    <div class="answer-preview" *ngIf="newAnswer">
+                        Vista previa: <strong>{{newAnswer.toUpperCase()}}</strong>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button 
+                        (click)="addQuestion()" 
+                        [disabled]="!canAddQuestion()"
+                        class="btn btn-add">
+                        ➕ Agregar Pregunta
+                    </button>
+                    <button (click)="clearForm()" class="btn btn-clear">
+                        🗑️ Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="questions-list-section">
+            <h2>📋 Preguntas Tradicionales Registradas</h2>
+            <div class="difficulty-tabs">
+                <button 
+                    *ngFor="let diff of difficulties" 
+                    (click)="activeTab = diff.key"
+                    [class.active]="activeTab === diff.key"
+                    class="tab-button">
+                    {{diff.icon}} {{diff.label}} ({{getQuestionCount(diff.key)}})
+                </button>
+            </div>
+
+            <div class="questions-container">
+                <div class="questions-grid">
+                    <div *ngFor="let question of getFilteredQuestions(); let i = index" 
+                         class="question-card" 
+                         [class.editing]="editingId === question.id">
+                        
+                        <div class="question-header">
+                            <span class="question-number">#{{i + 1}}</span>
+                            <span class="difficulty-badge" [class]="question.difficulty">
+                                {{getDifficultyIcon(question.difficulty)}} {{question.difficulty}}
+                            </span>
+                        </div>
+
+                        <div *ngIf="editingId !== question.id" class="question-content">
+                            <div class="question-text">
+                                <strong>❓ Pregunta:</strong>
+                                <p>{{question.question}}</p>
+                            </div>
+                            <div class="answer-text">
+                                <strong>✅ Respuesta:</strong>
+                                <span class="answer-highlight">{{question.answer}}</span>
+                            </div>
+                        </div>
+
+                        <div *ngIf="editingId === question.id" class="question-edit">
+                            <div class="form-group">
+                                <label>Pregunta:</label>
+                                <textarea 
+                                    [(ngModel)]="editQuestion"
+                                    class="form-textarea edit-textarea"
+                                    rows="2">
+                                </textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Respuesta:</label>
+                                <input 
+                                    type="text" 
+                                    [(ngModel)]="editAnswer"
+                                    class="form-input"
+                                    maxlength="20">
+                            </div>
+                        </div>
+
+                        <div class="question-actions">
+                            <div *ngIf="editingId !== question.id">
+                                <button (click)="startEdit(question)" class="btn btn-edit">
+                                    ✏️ Editar
+                                </button>
+                                <button (click)="confirmDelete(question)" class="btn btn-delete">
+                                    🗑️ Eliminar
+                                </button>
+                            </div>
+                            <div *ngIf="editingId === question.id">
+                                <button (click)="saveEdit()" class="btn btn-save">
+                                    💾 Guardar
+                                </button>
+                                <button (click)="cancelEdit()" class="btn btn-cancel">
+                                    ❌ Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="getFilteredQuestions().length === 0" class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <p>No hay preguntas registradas para esta dificultad.</p>
+                    <p>¡Agrega la primera pregunta usando el formulario de arriba!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tools-section">
+        <h2>🔧 Herramientas</h2>
+        <div class="tools-grid">
+            <button (click)="exportQuestions()" class="tool-button">
+                📤 Exportar Datos
+            </button>
+            <button (click)="importQuestions()" class="tool-button">
+                📥 Importar Datos
+            </button>
+            <button (click)="clearAllQuestions()" class="tool-button danger">
+                🗑️ Limpiar Todo
+            </button>
+        </div>
+    </div>
+
+    <div *ngIf="showDeleteConfirm" class="modal-overlay" (click)="cancelDelete()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <h3>⚠️ Confirmar Eliminación</h3>
+            <p>¿Estás seguro de que quieres eliminar esta pregunta?</p>
+            <div class="modal-actions">
+                <button (click)="confirmDeleteAction()" class="btn btn-delete">
+                    🗑️ Eliminar
+                </button>
+                <button (click)="cancelDelete()" class="btn btn-cancel">
+                    ❌ Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
