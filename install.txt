@@ -5,37 +5,39 @@
 P-Web es un juego web desarrollado con Angular (frontend) y Laravel (backend). El juego permite a los usuarios registrarse, iniciar sesión y competir en un tablero de puntuaciones. Incluye panel de administración y funcionalidades de autenticación.
 
 ---
+EN CASO DE TENER DUDAS SEGUIR EL README DEL REPOSITORIO DE GITHUB
+===
 
 ## Instalación Sencilla (Automática)
 
 ### 1. Clona el repositorio
-```bash
+
 git clone https://github.com/Eth4nSP/P-Web.git
 cd P-Web
-```
+
 
 ### 2. Instala dependencias del backend y frontend
-```bash
+
 cd backend
 composer install
 cd ../Front
 npm install
-```
+
 ### 2.1. Iniciar gestor de base de datos
  - Usar XAMPP de preferencia en caso de que no tener usar su gestor de base de datos de preferencia
 ### 3. Configura el entorno de Laravel
-```bash
+
 cd ../backend
 php artisan key:generate
 php artisan migrate
-```
+
 ### En caso de no tener la base de datos 
  - Saldra el siguiente mensaje
-```bash
+
    WARN  The database 'backend' does not exist on the 'mysql' connection.
 
   Would you like to create it? (yes/no) [yes]
-```
+
  - Escribir "y" y pulsar enter
 
 #### -Warning- En caso de no salir el mensaje crear desde su gestor
@@ -43,19 +45,19 @@ php artisan migrate
 
 ### Para llenar la base de datos
 - desde P-Web/backend
-```bash
+
 php artisan db:seed
-```
+
 
 ### 4. Ejecuta ambos servidores (desarrollo)
 - **Desde la raíz del proyecto:**
 Es decir desde /P-Web/
-```bash
+
 cd backend
 php artisan serve
 cd ../Front
 ng serve
-```
+
 Esto levantará el backend de Laravel y el frontend de Angular en modo desarrollo (usando Vite y Angular CLI).
 ## Por ultimo
 ### Para empezar a jugar dirigirse a:
@@ -68,7 +70,7 @@ Esto levantará el backend de Laravel y el frontend de Angular en modo desarroll
 ### 1. Instala dependencias del backend
 - Abre `backend/composer.json` y asegúrate de tener
 las siguiente dependencias:
-```json
+
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0",
@@ -84,15 +86,15 @@ las siguiente dependencias:
         "pestphp/pest": "^3.8",
         "pestphp/pest-plugin-laravel": "^3.2"
     },
-```
+
 - Ejecuta:
-```bash
+
 composer install
-```
+
 
 ### 2. Instala dependencias del frontend
 - Abre `Front/package.json` y revisa las dependencias de Angular:
-```json
+
   "dependencies": {
     "@angular/animations": "^16.2.0",
     "@angular/common": "^16.2.0",
@@ -120,17 +122,17 @@ composer install
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.0.4"
   }
-```
+
 - Ejecuta:
-```bash
+
 cd ../Front
 npm install
-```
+
 ### 2.1. Iniciar gestor de base de datos
  - Usar XAMPP de preferencia en caso de que no tener usar su gestor de base de datos de preferencia
 ### 3. Configura variables de entorno y base de datos
 - Modifica el `.env` en `backend` y configura tu base de datos.
-```json
+
 
 DB_CONNECTION=mysql (cambiar por el gestor)
 DB_HOST=127.0.0.1 (servidor local)
@@ -138,25 +140,25 @@ DB_PORT=3306 (puerto dado por el gestor)
 DB_DATABASE=backend (nombre defecto de la base)
 DB_USERNAME=root (usuario defecto del gestor)
 DB_PASSWORD= (password defecto del gestor)
-```
+
 
 - Ejecuta migraciones:
-```bash
+
 php artisan migrate
 //Si quieres llenar la base
 php artisan db:seed
-```
+
 
 ### 4. Compila y ejecuta manualmente
 - Backend:
-```bash
+
 php artisan serve
-```
+
 - Frontend:
-```bash
+
 cd ../Front
 ng serve
-```
+
 
 ---
 
@@ -200,9 +202,9 @@ ng serve
 
 ## 🚀 Comenzar
 
-```bash
+
 ng serve
-```
+
 Abre tu navegador en [http://localhost:4200](http://localhost:4200) y ¡a jugar!
 
 ---
