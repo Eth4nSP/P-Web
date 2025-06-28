@@ -1,0 +1,133 @@
+# P-Web: Juego Web (Angular + Laravel)
+
+## Descripción
+
+P-Web es un juego web desarrollado con Angular (frontend) y Laravel (backend). El juego permite a los usuarios registrarse, iniciar sesión y competir en un tablero de puntuaciones. Incluye panel de administración y funcionalidades de autenticación.
+
+---
+
+## Instalación Sencilla (Automática)
+
+### 1. Clona el repositorio
+```bash
+git clone <url-del-repo>
+cd P-Web
+```
+
+### 2. Instala dependencias del backend y frontend
+```bash
+cd backend
+composer install
+npm install
+cd ../Front
+npm install
+```
+
+### 3. Configura el entorno de Laravel
+```bash
+cd ../backend
+php artisan key:generate
+```
+
+### 4. Ejecuta ambos servidores (desarrollo)
+- **Desde la raíz del proyecto:**
+Es decir desde /P-Web/
+```bash
+cd backend
+php artisan serve
+cd ../Front
+ng serve
+```
+Esto levantará el backend de Laravel y el frontend de Angular en modo desarrollo (usando Vite y Angular CLI).
+## Por ultimo
+### Para empezar a jugar dirigirse a:
+    http://localhost:4200/
+---
+
+## Instalación Manual (Avanzada)
+
+### 1. Instala dependencias del backend
+- Abre `backend/composer.json` y asegúrate de tener
+las siguiente dependencias:
+```json
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^12.0",
+        "laravel/tinker": "^2.10.1"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.23",
+        "laravel/pail": "^1.2.2",
+        "laravel/pint": "^1.13",
+        "laravel/sail": "^1.41",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.6",
+        "pestphp/pest": "^3.8",
+        "pestphp/pest-plugin-laravel": "^3.2"
+    },
+```
+- Ejecuta:
+```bash
+composer install
+```
+- Abre `Front/package.json` y revisa:
+```json
+"devDependencies": {
+  "@tailwindcss/vite": "^4.0.0",
+  "axios": "^1.8.2",
+  "concurrently": "^9.0.1",
+  "laravel-vite-plugin": "^1.2.0",
+  "tailwindcss": "^4.0.0",
+  "vite": "^6.2.4"
+}
+```
+- Ejecuta:
+```bash
+npm install
+```
+
+### 2. Instala dependencias del frontend
+- Abre `Front/package.json` y revisa las dependencias de Angular:
+```json
+"dependencies": {
+  "@angular/core": "^16.2.0",
+  ...
+}
+```
+- Ejecuta:
+```bash
+cd ../Front
+npm install
+```
+
+### 3. Configura variables de entorno y base de datos
+- Copia `.env.example` a `.env` en `backend` y configura tu base de datos.
+- Ejecuta migraciones:
+```bash
+php artisan migrate
+```
+
+### 4. Compila y ejecuta manualmente
+- Backend:
+```bash
+php artisan serve
+```
+- Frontend:
+```bash
+cd ../Front
+npm start
+```
+
+---
+
+## Ejecución y Detalles del Juego
+
+- **Backend (Laravel):** Corre en `http://localhost:8000` (por defecto).
+- **Frontend (Angular):** Corre en `http://localhost:4200`.
+- El frontend consume la API del backend para autenticación, registro y puntuaciones.
+- Incluye panel de administración y tablero de puntuaciones.
+- Puedes modificar las rutas y puertos en los archivos de configuración si lo necesitas.
+
+---
+
+¡Listo! Así puedes instalar y ejecutar el proyecto tanto de forma sencilla como manual. Para dudas, revisa los archivos `README.md` en cada subcarpeta o contacta al autor.
